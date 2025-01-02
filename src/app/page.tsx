@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { getTokens } from '@/lib/db';
-// import Image from 'next/image';
+'use client';
+
+import { useEffect, useState } from 'react';
 
 type Token = {
   id: number;
@@ -16,9 +17,39 @@ type Token = {
   is_meme: boolean;
 };
 
-export default async function Home() {
-  const tokens = await getTokens();
-  
+export default function Home() {
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTokens() {
+      try {
+        const response = await fetch('/api/tokens');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tokens');
+        }
+        const data = await response.json();
+        setTokens(data);
+      } catch (err) {
+        setError('Failed to load tokens');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTokens();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <main className="min-h-screen p-8">
       <h1 className="text-2xl font-bold mb-4">Tokens</h1>
