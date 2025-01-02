@@ -11,7 +11,7 @@ const pool = new Pool({
   },
   // Add these parameters to ensure SSL is used
   keepAlive: true,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 });
 
 export async function testConnection() {
