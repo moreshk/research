@@ -30,7 +30,7 @@ export async function testConnection() {
 export async function getTokens() {
     const client = await pool.connect();
     try {
-      const result = await client.query('SELECT * FROM tokens ORDER BY name ASC');
+      const result = await client.query('SELECT *, framework as ecosystem FROM tokens ORDER BY name ASC');
       return result.rows;
     } catch (error) {
       console.error('Error fetching tokens:', error);
