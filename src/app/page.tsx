@@ -2,6 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { InfoCircledIcon, CheckIcon, CopyIcon } from '@radix-ui/react-icons';
 
 type Token = {
   id: number;
@@ -16,6 +18,78 @@ type Token = {
   is_framework: boolean;
   is_application: boolean;
   is_meme: boolean;
+};
+
+const TypeTooltip = () => (
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <button className="inline-flex items-center ml-1">
+          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
+          sideOffset={5}
+        >
+          <p className="mb-2">
+            <strong>Agents:</strong> AI powered digital entities that have a degree of autonomy in the tasks they perform. 
+            They can respond on various platforms such as twitter, discord and other social media platforms and take on 
+            personas as defined by their creators. They can also perform other tasks such as trading etc. Eg: ELIZA.
+          </p>
+          <p className="mb-2">
+            <strong>Agent Frameworks:</strong> Development toolkits that make development of these agents easier. 
+            eg: Virtuals, Ai16z, Zerebro etc.
+          </p>
+          <p className="mb-2">
+            <strong>Applications:</strong> Something which can be used to either receive information or perform some 
+            action either by humans or agents. eg: cookie, dexscreener etc.
+          </p>
+          <p>
+            <strong>Meme:</strong> A pure meme is a content only play which may or may not be powered by AI. 
+            for eg: FARTCOIN.
+          </p>
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+);
+
+const CopyableAddress = ({ address }: { address: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Format address to show only first 6 and last 4 characters
+  const formatAddress = (addr: string) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  return (
+    <button
+      onClick={copyToClipboard}
+      className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-800 transition-colors"
+      title="Click to copy address"
+    >
+      <span className="font-mono text-sm">{formatAddress(address)}</span>
+      {copied ? (
+        <CheckIcon className="h-4 w-4 text-green-500" />
+      ) : (
+        <CopyIcon className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
+    </button>
+  );
 };
 
 export default function Home() {
@@ -122,7 +196,10 @@ export default function Home() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Contract</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Type
+                <TypeTooltip />
+              </th>
             </tr>
           </thead>
           <tbody className="bg-gray-900 divide-y divide-gray-700">
@@ -156,9 +233,7 @@ export default function Home() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm font-mono text-gray-300">
-                    {`${token.contract_address.slice(0, 6)}...${token.contract_address.slice(-4)}`}
-                  </span>
+                  <CopyableAddress address={token.contract_address} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex gap-2">
