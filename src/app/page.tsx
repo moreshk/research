@@ -195,7 +195,6 @@ export default function Home() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Token</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Contract</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Type
                 <TypeTooltip />
@@ -218,7 +217,10 @@ export default function Home() {
                     )}
                     <div>
                       <div className="font-medium text-white">{token.name}</div>
-                      <div className="text-sm text-gray-400">{token.symbol}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400">{token.symbol}</span>
+                        <CopyableAddress address={token.contract_address} />
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -231,9 +233,6 @@ export default function Home() {
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
                     {token.ecosystem || 'Unknown'}
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <CopyableAddress address={token.contract_address} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex gap-2">
