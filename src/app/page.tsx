@@ -92,6 +92,73 @@ const CopyableAddress = ({ address }: { address: string }) => {
   );
 };
 
+const ChainSelect = ({ 
+  value, 
+  onChange, 
+  chains 
+}: { 
+  value: string, 
+  onChange: (value: string) => void, 
+  chains: string[] 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="bg-gray-800 text-white rounded px-3 py-2 w-40 flex items-center justify-between"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {value === 'all' ? (
+          <span>All Chains</span>
+        ) : (
+          <div className="flex items-center gap-2">
+            <img
+              src={`/${value.toLowerCase()}.png`}
+              alt={value}
+              className="h-4 w-4"
+            />
+            <span>{value}</span>
+          </div>
+        )}
+        <span className="ml-2">▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg">
+          <div 
+            className="p-2 hover:bg-gray-700 cursor-pointer"
+            onClick={() => {
+              onChange('all');
+              setIsOpen(false);
+            }}
+          >
+            All Chains
+          </div>
+          {chains.map(chain => (
+            <div
+              key={chain}
+              className="p-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2"
+              onClick={() => {
+                onChange(chain);
+                setIsOpen(false);
+              }}
+            >
+              <img
+                src={`/${chain.toLowerCase()}.png`}
+                alt={chain}
+                className="h-4 w-4"
+              />
+              <span>{chain}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function Home() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +216,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen p-8">
+    <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Tokens</h1>
       
       <div className="flex gap-4 mb-4">
@@ -165,16 +232,11 @@ export default function Home() {
           <option value="meme">Meme</option>
         </select>
 
-        <select
-          className="bg-gray-800 text-white rounded px-3 py-2"
+        <ChainSelect
           value={filters.chain}
-          onChange={(e) => setFilters(prev => ({ ...prev, chain: e.target.value }))}
-        >
-          <option value="all">All Chains</option>
-          {uniqueChains.map(chain => (
-            <option key={chain} value={chain}>{chain}</option>
-          ))}
-        </select>
+          onChange={(value) => setFilters(prev => ({ ...prev, chain: value }))}
+          chains={uniqueChains}
+        />
 
         <select
           className="bg-gray-800 text-white rounded px-3 py-2"
@@ -225,9 +287,12 @@ export default function Home() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900 text-blue-200">
-                    {token.chain}
-                  </span>
+                  <img 
+                    src={`/${token.chain.toLowerCase()}.png`}
+                    alt={token.chain}
+                    className="h-6 w-6"
+                    title={token.chain}
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
@@ -263,6 +328,6 @@ export default function Home() {
           </tbody>
         </table>
       </div>
-    </main>
+    </div>
   );
 }
