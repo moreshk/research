@@ -257,7 +257,7 @@ export default function Home() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Tokens</h1>
+      {/* <h1 className="text-2xl font-bold mb-4">Tokens</h1> */}
       
       <div className="flex gap-4 mb-4">
         <select
@@ -394,7 +394,7 @@ export default function Home() {
                   <tr className="bg-gray-800">
                     <td colSpan={6} className="px-6 py-4">
                       <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
-                        <h3 className="font-semibold text-white mb-2">Project Description:</h3>
+                        {/* <h3 className="font-semibold text-white mb-2">Project Description:</h3> */}
                         {token.project_desc || 'No description available.'}
                       </div>
                     </td>
