@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon, GitHubLogoIcon, TwitterLogoIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon, GitHubLogoIcon, TwitterLogoIcon, ExternalLinkIcon, ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
 
 type Token = {
   id: number;
@@ -26,6 +26,47 @@ type Token = {
   github_analysis: string | null;
   twitter_url: string | null;
   dexscreener_url: string | null;
+};
+
+interface SortableHeaderProps {
+  field: SortField;
+  label: string;
+  sortConfig: {
+    field: SortField;
+    direction: SortDirection;
+  };
+  onSort: (field: SortField) => void;
+}
+
+const SortableHeader: React.FC<SortableHeaderProps> = ({ 
+  field, 
+  label, 
+  sortConfig, 
+  onSort 
+}) => {
+  return (
+    <th 
+      className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <span className="inline-flex flex-col justify-center h-4">
+          {sortConfig.field === field ? (
+            sortConfig.direction === 'asc' ? (
+              <ArrowUpIcon className="h-3 w-3" />
+            ) : (
+              <ArrowDownIcon className="h-3 w-3" />
+            )
+          ) : (
+            <div className="opacity-0 group-hover:opacity-50">
+              <ArrowUpIcon className="h-3 w-3" />
+            </div>
+          )}
+        </span>
+      </div>
+    </th>
+  );
 };
 
 const TypeTooltip = () => (
@@ -181,6 +222,9 @@ function formatPriceChange(change: number | null): string {
   return `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
 }
 
+type SortField = 'price' | 'price_change_24h' | null;
+type SortDirection = 'asc' | 'desc';
+
 export default function Home() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,6 +235,13 @@ export default function Home() {
     ecosystem: 'all'
   });
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [sortConfig, setSortConfig] = useState<{
+    field: SortField;
+    direction: SortDirection;
+  }>({
+    field: null,
+    direction: 'desc'
+  });
 
   useEffect(() => {
     async function fetchData() {
@@ -226,18 +277,46 @@ export default function Home() {
     .filter(ecosystem => ecosystem)
     .sort();
 
-  const filteredTokens = tokens.filter(token => {
-    const typeMatch = filters.type === 'all' || 
-      (filters.type === 'agent' && token.is_agent) ||
-      (filters.type === 'framework' && token.is_framework) ||
-      (filters.type === 'application' && token.is_application) ||
-      (filters.type === 'meme' && token.is_meme);
-    
-    const chainMatch = filters.chain === 'all' || token.chain === filters.chain;
-    const ecosystemMatch = filters.ecosystem === 'all' || token.ecosystem === filters.ecosystem;
-    
-    return typeMatch && chainMatch && ecosystemMatch;
-  });
+  const handleSort = (field: SortField) => {
+    setSortConfig(current => ({
+      field,
+      direction: 
+        current.field === field && current.direction === 'desc' 
+          ? 'asc' 
+          : 'desc'
+    }));
+  };
+
+  const sortedAndFilteredTokens = React.useMemo(() => {
+    const filtered = tokens.filter(token => {
+      const typeMatch = filters.type === 'all' || 
+        (filters.type === 'agent' && token.is_agent) ||
+        (filters.type === 'framework' && token.is_framework) ||
+        (filters.type === 'application' && token.is_application) ||
+        (filters.type === 'meme' && token.is_meme);
+      
+      const chainMatch = filters.chain === 'all' || token.chain === filters.chain;
+      const ecosystemMatch = filters.ecosystem === 'all' || token.ecosystem === filters.ecosystem;
+      
+      return typeMatch && chainMatch && ecosystemMatch;
+    });
+
+    if (sortConfig.field) {
+      return [...filtered].sort((a, b) => {
+        const aValue = a[sortConfig.field!];
+        const bValue = b[sortConfig.field!];
+        
+        // Handle null/undefined values
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        
+        const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    return filtered;
+  }, [tokens, filters, sortConfig]);
 
   const toggleRow = (id: number) => {
     setExpandedRows(prev => {
@@ -301,8 +380,18 @@ export default function Home() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Token</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Price</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">24h Change</th>
+              <SortableHeader
+                field="price"
+                label="Price"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                field="price_change_24h"
+                label="24h Change"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              />
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Type
                 <TypeTooltip />
@@ -310,7 +399,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody className="bg-gray-900 divide-y divide-gray-700">
-            {filteredTokens.map((token: Token) => (
+            {sortedAndFilteredTokens.map((token: Token) => (
               <React.Fragment key={token.id}>
                 <tr 
                   className="hover:bg-gray-800 cursor-pointer"

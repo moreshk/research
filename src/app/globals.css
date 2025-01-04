@@ -34,3 +34,12 @@ body {
     opacity: 1;
   }
 }
+
+/* Add these styles */
+.sortable-header {
+  @apply transition-colors duration-150;
+}
+
+.sortable-header:hover {
+  @apply bg-gray-700;
+}
