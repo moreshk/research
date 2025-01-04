@@ -9,7 +9,7 @@ async function fetchTokenOverview(address: string) {
   const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
   const response = await fetch(url, {
     headers: {
-      'X-API-KEY': '6b234866de0740509b9c0eef83e97119',
+      'X-API-KEY': process.env.BIRDEYE_API_KEY!,
       'accept': 'application/json',
       'x-chain': 'solana'
     }
