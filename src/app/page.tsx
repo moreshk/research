@@ -162,6 +162,20 @@ const ChainSelect = ({
   );
 };
 
+// Add this helper function for formatting prices
+function formatPrice(price: number | null): string {
+  if (price === null || price === undefined) return 'N/A';
+  return price < 0.01 
+    ? `$${price.toFixed(8)}` 
+    : `$${price.toFixed(2)}`;
+}
+
+// Add this helper function for formatting price changes
+function formatPriceChange(change: number | null): string {
+  if (change === null || change === undefined) return 'N/A';
+  return `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+}
+
 export default function Home() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
@@ -269,6 +283,8 @@ export default function Home() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Token</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Price</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">24h Change</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Type
                 <TypeTooltip />
@@ -309,6 +325,19 @@ export default function Home() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
                     {token.ecosystem || 'Unknown'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-white font-medium">
+                    {formatPrice(token.price)}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`font-medium ${
+                    !token.price_change_24h ? 'text-gray-400' :
+                    token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {formatPriceChange(token.price_change_24h)}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
