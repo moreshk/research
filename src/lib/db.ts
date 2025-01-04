@@ -38,7 +38,10 @@ export async function getTokens() {
         description,
         contract_address,
         image_url,
-        LOWER(chain) as chain,
+        CASE 
+          WHEN contract_address = '0x44ff8620b8ca30902395a7bd3f2407e1a091bf73' THEN 'base'
+          ELSE LOWER(chain)
+        END as chain,
         framework as ecosystem,
         is_agent,
         is_framework,
@@ -68,9 +71,10 @@ export async function updateTokenPrices(tokenUpdates: { id: number, price: numbe
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    //console.log(`Updating ${tokenUpdates.length} tokens`);
+    console.log(`Updating ${tokenUpdates.length} tokens`);
     for (const update of tokenUpdates) {
-      //console.log(`Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}`);
+      console.log(`Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}`);
+
       await client.query(
         'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4 WHERE id = $5',
         [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, update.id]

@@ -10,8 +10,7 @@ export async function withRateLimit(
   }
 ) {
   // Get IP address from the request
-  const ip = request.ip || 
-            request.headers.get('x-real-ip') || 
+  const ip = request.headers.get('x-real-ip') || 
             request.headers.get('x-forwarded-for') || 
             '127.0.0.1';
 
