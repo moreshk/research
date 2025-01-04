@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { InfoCircledIcon, CheckIcon, CopyIcon } from '@radix-ui/react-icons';
+import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 
 type Token = {
   id: number;
@@ -21,6 +21,7 @@ type Token = {
   price: number;
   price_change_24h: number;
   price_updated_at: string;
+  project_desc: string | null;
 };
 
 const TypeTooltip = () => (
@@ -185,6 +186,7 @@ export default function Home() {
     chain: 'all',
     ecosystem: 'all'
   });
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     async function fetchData() {
@@ -232,6 +234,18 @@ export default function Home() {
     
     return typeMatch && chainMatch && ecosystemMatch;
   });
+
+  const toggleRow = (id: number) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -293,78 +307,100 @@ export default function Home() {
           </thead>
           <tbody className="bg-gray-900 divide-y divide-gray-700">
             {filteredTokens.map((token: Token) => (
-              <tr key={token.id} className="hover:bg-gray-800">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {token.image_url && (
-                      <div className="flex-shrink-0 h-10 w-10 mr-4">
-                        <img
-                          src={token.image_url}
-                          alt={token.name}
-                          className="h-10 w-10 rounded-full"
-                        />
+              <React.Fragment key={token.id}>
+                <tr 
+                  className="hover:bg-gray-800 cursor-pointer"
+                  onClick={() => toggleRow(token.id)}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="mr-2 text-gray-400">
+                        {expandedRows.has(token.id) ? (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronRightIcon className="h-4 w-4" />
+                        )}
                       </div>
-                    )}
-                    <div>
-                      <div className="font-medium text-white">{token.name}</div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400">{token.symbol}</span>
-                        <CopyableAddress address={token.contract_address} />
+                      {token.image_url && (
+                        <div className="flex-shrink-0 h-10 w-10 mr-4">
+                          <img
+                            src={token.image_url}
+                            alt={token.name}
+                            className="h-10 w-10 rounded-full"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium text-white">{token.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-400">{token.symbol}</span>
+                          <CopyableAddress address={token.contract_address} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <img 
-                    src={`/${token.chain.toLowerCase()}.png`}
-                    alt={token.chain}
-                    className="h-6 w-6"
-                    title={token.chain}
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
-                    {token.ecosystem || 'Unknown'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-white font-medium">
-                    {formatPrice(token.price)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`font-medium ${
-                    !token.price_change_24h ? 'text-gray-400' :
-                    token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {formatPriceChange(token.price_change_24h)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex gap-2">
-                    {token.is_agent && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-200">
-                        Agent
-                      </span>
-                    )}
-                    {token.is_framework && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-200">
-                        Framework
-                      </span>
-                    )}
-                    {token.is_application && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-200">
-                        App
-                      </span>
-                    )}
-                    {token.is_meme && (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900 text-pink-200">
-                        Meme
-                      </span>
-                    )}
-                  </div>
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <img 
+                      src={`/${token.chain.toLowerCase()}.png`}
+                      alt={token.chain}
+                      className="h-6 w-6"
+                      title={token.chain}
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
+                      {token.ecosystem || 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-white font-medium">
+                      {formatPrice(token.price)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`font-medium ${
+                      !token.price_change_24h ? 'text-gray-400' :
+                      token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {formatPriceChange(token.price_change_24h)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex gap-2">
+                      {token.is_agent && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-200">
+                          Agent
+                        </span>
+                      )}
+                      {token.is_framework && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-900 text-green-200">
+                          Framework
+                        </span>
+                      )}
+                      {token.is_application && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-900 text-yellow-200">
+                          App
+                        </span>
+                      )}
+                      {token.is_meme && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900 text-pink-200">
+                          Meme
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                {expandedRows.has(token.id) && (
+                  <tr className="bg-gray-800">
+                    <td colSpan={6} className="px-6 py-4">
+                      <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
+                        <h3 className="font-semibold text-white mb-2">Project Description:</h3>
+                        {token.project_desc || 'No description available.'}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

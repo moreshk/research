@@ -46,7 +46,8 @@ export async function getTokens() {
         is_meme,
         price,
         price_change_24h,
-        price_updated_at
+        price_updated_at,
+        project_desc
       FROM tokens 
       ORDER BY name ASC
     `);

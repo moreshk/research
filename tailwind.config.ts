@@ -12,6 +12,15 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      animation: {
+        expandRow: 'expandRow 0.2s ease-out',
+      },
+      keyframes: {
+        expandRow: {
+          '0%': { opacity: '0', transform: 'scaleY(0)' },
+          '100%': { opacity: '1', transform: 'scaleY(1)' },
+        },
+      },
     },
   },
   plugins: [],
