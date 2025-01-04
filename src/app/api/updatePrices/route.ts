@@ -6,13 +6,13 @@ import { withRateLimit } from '@/lib/apiMiddleware';
 const CACHE_KEY = 'token_prices';
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
 
-async function fetchTokenOverview(address: string) {
+async function fetchTokenOverview(address: string, chain: string) {
   const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
   const response = await fetch(url, {
     headers: {
       'X-API-KEY': process.env.BIRDEYE_API_KEY!,
       'accept': 'application/json',
-      'x-chain': 'solana'
+      'x-chain': chain.toLowerCase()
     }
   });
   return response.json();
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         const updates = [];
 
         for (const token of tokens) {
-          const overviewData = await fetchTokenOverview(token.contract_address);
+          const overviewData = await fetchTokenOverview(token.contract_address, token.chain);
           
           if (overviewData.success) {
             updates.push({
@@ -49,6 +49,8 @@ export async function GET(request: NextRequest) {
               price_change_24h: overviewData.data.priceChange24hPercent,
               price_updated_at: new Date().toISOString()
             });
+          } else {
+            console.error(`Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}. Error:`, overviewData.error || 'Unknown error');
           }
         }
 

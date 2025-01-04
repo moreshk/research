@@ -18,7 +18,7 @@ export async function testConnection() {
   try {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
-    console.log('Connection successful:', result.rows[0]);
+    //console.log('Connection successful:', result.rows[0]);
     client.release();
     return true;
   } catch (error) {
@@ -68,13 +68,16 @@ export async function updateTokenPrices(tokenUpdates: { id: number, price: numbe
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    //console.log(`Updating ${tokenUpdates.length} tokens`);
     for (const update of tokenUpdates) {
+      //console.log(`Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}`);
       await client.query(
         'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4 WHERE id = $5',
         [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, update.id]
       );
     }
     await client.query('COMMIT');
+    //console.log('Token updates completed');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error updating token prices:', error);
