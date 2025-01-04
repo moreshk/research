@@ -209,8 +209,20 @@ const ChainSelect = ({
   );
 };
 
-// Add this helper function for formatting prices
-function formatPrice(price: number | string | null | undefined): string {
+// Add this helper function for formatting large numbers
+function formatLargeNumber(num: number): string {
+  if (num >= 1e9) {
+    return `$${(num / 1e9).toFixed(1)}B`;
+  } else if (num >= 1e6) {
+    return `$${(num / 1e6).toFixed(1)}M`;
+  } else if (num >= 1e3) {
+    return `$${(num / 1e3).toFixed(1)}K`;
+  }
+  return `$${num.toFixed(0)}`;
+}
+
+// Update the formatPrice function
+function formatPrice(price: number | string | null | undefined, isMarketCap: boolean = false): string {
   if (price === null || price === undefined) return 'N/A';
   
   // Convert to number if it's a string
@@ -218,6 +230,11 @@ function formatPrice(price: number | string | null | undefined): string {
   
   // Check if it's a valid number
   if (isNaN(numericPrice)) return 'N/A';
+  
+  // Handle market cap differently
+  if (isMarketCap) {
+    return formatLargeNumber(numericPrice);
+  }
   
   return numericPrice < 0.01 
     ? `$${numericPrice.toFixed(8)}` 
@@ -481,7 +498,7 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-white font-medium">
-                      {formatPrice(token.market_cap)}
+                      {formatPrice(token.market_cap, true)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
