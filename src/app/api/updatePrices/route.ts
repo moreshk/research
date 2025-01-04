@@ -6,13 +6,14 @@ import { withRateLimit } from '@/lib/apiMiddleware';
 const CACHE_KEY = 'token_prices';
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
 
-async function fetchTokenOverview(address: string, chain: string) {
+async function fetchTokenOverview(address: string, chain: string, tokenId: number) {
+  const apiChain = tokenId === 3 ? 'ethereum' : chain.toLowerCase();
   const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
   const response = await fetch(url, {
     headers: {
       'X-API-KEY': process.env.BIRDEYE_API_KEY!,
       'accept': 'application/json',
-      'x-chain': chain.toLowerCase()
+      'x-chain': apiChain
     }
   });
   return response.json();
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
         const updates = [];
 
         for (const token of tokens) {
-          const overviewData = await fetchTokenOverview(token.contract_address, token.chain);
+          const overviewData = await fetchTokenOverview(token.contract_address, token.chain, token.id);
           
           if (overviewData.success) {
             updates.push({
@@ -47,7 +48,9 @@ export async function GET(request: NextRequest) {
               price: overviewData.data.price,
               market_cap: overviewData.data.mc,
               price_change_24h: overviewData.data.priceChange24hPercent,
-              price_updated_at: new Date().toISOString()
+              price_updated_at: new Date().toISOString(),
+              contract_address: token.contract_address,
+              chain: token.id === 3 ? 'base' : token.chain
             });
           } else {
             console.error(`Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}. Error:`, overviewData.error || 'Unknown error');

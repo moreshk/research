@@ -67,21 +67,34 @@ export async function getTokens() {
   }
 }
 
-export async function updateTokenPrices(tokenUpdates: { id: number, price: number, market_cap: number, price_change_24h: number, price_updated_at: string }[]) {
+export async function updateTokenPrices(tokenUpdates: { 
+  id: number, 
+  price: number, 
+  market_cap: number, 
+  price_change_24h: number, 
+  price_updated_at: string,
+  contract_address: string,
+  chain: string
+}[]) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     console.log(`Updating ${tokenUpdates.length} tokens`);
     for (const update of tokenUpdates) {
-      console.log(`Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}`);
+      // Special handling for Virtuals (ID 3)
+      const chainToStore = update.id === 3 ? 'ethereum' : update.chain;
+      
+      console.log(
+        `Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}, ` +
+        `contract=${update.contract_address}, chain=${update.chain}, stored_chain=${chainToStore}`
+      );
 
       await client.query(
-        'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4 WHERE id = $5',
-        [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, update.id]
+        'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4, chain = $5 WHERE id = $6',
+        [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, chainToStore, update.id]
       );
     }
     await client.query('COMMIT');
-    //console.log('Token updates completed');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Error updating token prices:', error);

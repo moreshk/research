@@ -472,10 +472,10 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <img 
-                      src={`/${token.chain.toLowerCase()}.png`}
-                      alt={token.chain}
+                      src={`/${token.id === 3 ? 'base' : token.chain.toLowerCase()}.png`}
+                      alt={token.id === 3 ? 'base' : token.chain}
                       className="h-6 w-6"
-                      title={token.chain}
+                      title={token.id === 3 ? 'base' : token.chain}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
