@@ -28,14 +28,53 @@ export async function testConnection() {
 } 
 
 export async function getTokens() {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT *, framework as ecosystem FROM tokens ORDER BY name ASC');
-      return result.rows;
-    } catch (error) {
-      console.error('Error fetching tokens:', error);
-      throw error;
-    } finally {
-      client.release();
-    }
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT 
+        id, 
+        name,
+        symbol,
+        description,
+        contract_address,
+        image_url,
+        LOWER(chain) as chain,
+        framework as ecosystem,
+        is_agent,
+        is_framework,
+        is_application,
+        is_meme,
+        price,
+        price_change_24h,
+        price_updated_at
+      FROM tokens 
+      ORDER BY name ASC
+    `);
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching tokens:', error);
+    throw error;
+  } finally {
+    client.release();
   }
+}
+
+export async function updateTokenPrices(tokenUpdates: { id: number, price: number, price_change_24h: number, price_updated_at: string }[]) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const update of tokenUpdates) {
+      await client.query(
+        'UPDATE tokens SET price = $1, price_change_24h = $2, price_updated_at = $3 WHERE id = $4',
+        [update.price, update.price_change_24h, update.price_updated_at, update.id]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error updating token prices:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}

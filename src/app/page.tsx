@@ -18,6 +18,9 @@ type Token = {
   is_framework: boolean;
   is_application: boolean;
   is_meme: boolean;
+  price: number;
+  price_change_24h: number;
+  price_updated_at: string;
 };
 
 const TypeTooltip = () => (
@@ -170,13 +173,22 @@ export default function Home() {
   });
 
   useEffect(() => {
-    async function fetchTokens() {
+    async function fetchData() {
       try {
-        const response = await fetch('/api/tokens');
-        if (!response.ok) {
+        // First, try to update prices (will use cache if available)
+        const priceResponse = await fetch('/api/updatePrices');
+        const priceData = await priceResponse.json();
+        
+        if (!priceData.success) {
+          console.warn('Price update failed:', priceData.error);
+        }
+        
+        // Then fetch the tokens (which will include the latest prices)
+        const tokenResponse = await fetch('/api/tokens');
+        if (!tokenResponse.ok) {
           throw new Error('Failed to fetch tokens');
         }
-        const data = await response.json();
+        const data = await tokenResponse.json();
         setTokens(data);
       } catch (err) {
         setError('Failed to load tokens');
@@ -186,7 +198,7 @@ export default function Home() {
       }
     }
 
-    fetchTokens();
+    fetchData();
   }, []);
 
   const uniqueChains = Array.from(new Set(tokens.map(token => token.chain)));
