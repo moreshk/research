@@ -47,7 +47,11 @@ export async function getTokens() {
         price,
         price_change_24h,
         price_updated_at,
-        project_desc
+        project_desc,
+        github_url,
+        github_analysis,
+        twitter_url,
+        dexscreener_url
       FROM tokens 
       ORDER BY name ASC
     `);

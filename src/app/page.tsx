@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon, GitHubLogoIcon, TwitterLogoIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 
 type Token = {
   id: number;
@@ -22,6 +22,10 @@ type Token = {
   price_change_24h: number;
   price_updated_at: string;
   project_desc: string | null;
+  github_url: string | null;
+  github_analysis: string | null;
+  twitter_url: string | null;
+  dexscreener_url: string | null;
 };
 
 const TypeTooltip = () => (
@@ -393,9 +397,53 @@ export default function Home() {
                 {expandedRows.has(token.id) && (
                   <tr className="bg-gray-800">
                     <td colSpan={6} className="px-6 py-4">
-                      <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
-                        {/* <h3 className="font-semibold text-white mb-2">Project Description:</h3> */}
-                        {token.project_desc || 'No description available.'}
+                      <div className="space-y-4">
+                        {/* Project Description */}
+                        <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
+                          {token.project_desc || 'No description available.'}
+                        </div>
+                        
+                        {/* Links Section */}
+                        <div className="flex gap-4 pt-2">
+                          {token.github_url && (
+                            <a
+                              href={token.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                              title="GitHub Repository"
+                            >
+                              <GitHubLogoIcon className="h-5 w-5" />
+                              <span className="text-sm">GitHub</span>
+                            </a>
+                          )}
+                          
+                          {token.twitter_url && (
+                            <a
+                              href={token.twitter_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                              title="Twitter Profile"
+                            >
+                              <TwitterLogoIcon className="h-5 w-5" />
+                              <span className="text-sm">Twitter</span>
+                            </a>
+                          )}
+                          
+                          {token.dexscreener_url && (
+                            <a
+                              href={token.dexscreener_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                              title="DexScreener"
+                            >
+                              <ExternalLinkIcon className="h-5 w-5" />
+                              <span className="text-sm">DexScreener</span>
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
