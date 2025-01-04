@@ -18,6 +18,7 @@ export async function GET() {
         const priceData = priceUpdates.find((update: any) => update.id === token.id);
         if (priceData) {
           token.price = priceData.price;
+          token.market_cap = priceData.market_cap;
           token.price_change_24h = priceData.price_change_24h;
           token.price_updated_at = priceData.price_updated_at;
         }

@@ -26,6 +26,7 @@ type Token = {
   github_analysis: string | null;
   twitter_url: string | null;
   dexscreener_url: string | null;
+  market_cap: number;
 };
 
 interface SortableHeaderProps {
@@ -209,20 +210,34 @@ const ChainSelect = ({
 };
 
 // Add this helper function for formatting prices
-function formatPrice(price: number | null): string {
+function formatPrice(price: number | string | null | undefined): string {
   if (price === null || price === undefined) return 'N/A';
-  return price < 0.01 
-    ? `$${price.toFixed(8)}` 
-    : `$${price.toFixed(2)}`;
+  
+  // Convert to number if it's a string
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  
+  // Check if it's a valid number
+  if (isNaN(numericPrice)) return 'N/A';
+  
+  return numericPrice < 0.01 
+    ? `$${numericPrice.toFixed(8)}` 
+    : `$${numericPrice.toFixed(2)}`;
 }
 
 // Add this helper function for formatting price changes
-function formatPriceChange(change: number | null): string {
+function formatPriceChange(change: number | string | null | undefined): string {
   if (change === null || change === undefined) return 'N/A';
-  return `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+  
+  // Convert to number if it's a string
+  const numericChange = typeof change === 'string' ? parseFloat(change) : change;
+  
+  // Check if it's a valid number
+  if (isNaN(numericChange)) return 'N/A';
+  
+  return `${numericChange > 0 ? '+' : ''}${numericChange.toFixed(2)}%`;
 }
 
-type SortField = 'price' | 'price_change_24h' | null;
+type SortField = 'price' | 'price_change_24h' | 'market_cap' | null;
 type SortDirection = 'asc' | 'desc';
 
 export default function Home() {
@@ -392,6 +407,12 @@ export default function Home() {
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />
+              <SortableHeader
+                field="market_cap"
+                label="Market Cap"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              />
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Type
                 <TypeTooltip />
@@ -456,6 +477,11 @@ export default function Home() {
                       token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {formatPriceChange(token.price_change_24h)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-white font-medium">
+                      {formatPrice(token.market_cap)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

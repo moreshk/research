@@ -64,14 +64,14 @@ export async function getTokens() {
   }
 }
 
-export async function updateTokenPrices(tokenUpdates: { id: number, price: number, price_change_24h: number, price_updated_at: string }[]) {
+export async function updateTokenPrices(tokenUpdates: { id: number, price: number, market_cap: number, price_change_24h: number, price_updated_at: string }[]) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     for (const update of tokenUpdates) {
       await client.query(
-        'UPDATE tokens SET price = $1, price_change_24h = $2, price_updated_at = $3 WHERE id = $4',
-        [update.price, update.price_change_24h, update.price_updated_at, update.id]
+        'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4 WHERE id = $5',
+        [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, update.id]
       );
     }
     await client.query('COMMIT');

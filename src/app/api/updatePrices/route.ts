@@ -5,13 +5,13 @@ import { NextResponse } from 'next/server';
 const CACHE_KEY = 'token_prices';
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
 
-async function fetchPrices(chain: string, addresses: string[]) {
-  const url = `https://public-api.birdeye.so/defi/multi_price?list_address=${addresses.join(',')}`;
+async function fetchTokenOverview(address: string) {
+  const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
   const response = await fetch(url, {
     headers: {
       'X-API-KEY': '6b234866de0740509b9c0eef83e97119',
       'accept': 'application/json',
-      'x-chain': chain
+      'x-chain': 'solana'
     }
   });
   return response.json();
@@ -32,33 +32,19 @@ export async function GET() {
 
     // If no cache, fetch fresh data
     const tokens = await getTokens();
-    const tokensByChain: { [key: string]: typeof tokens } = {};
-
-    tokens.forEach(token => {
-      if (!tokensByChain[token.chain]) {
-        tokensByChain[token.chain] = [];
-      }
-      tokensByChain[token.chain].push(token);
-    });
-
     const updates = [];
 
-    for (const [chain, chainTokens] of Object.entries(tokensByChain)) {
-      const addresses = chainTokens.map(token => token.contract_address);
-      const priceData = await fetchPrices(chain, addresses);
-
-      if (priceData.success) {
-        for (const token of chainTokens) {
-          const tokenData = priceData.data[token.contract_address];
-          if (tokenData) {
-            updates.push({
-              id: token.id,
-              price: tokenData.value,
-              price_change_24h: tokenData.priceChange24h,
-              price_updated_at: new Date(tokenData.updateHumanTime).toISOString()
-            });
-          }
-        }
+    for (const token of tokens) {
+      const overviewData = await fetchTokenOverview(token.contract_address);
+      
+      if (overviewData.success) {
+        updates.push({
+          id: token.id,
+          price: overviewData.data.price,
+          market_cap: overviewData.data.mc,
+          price_change_24h: overviewData.data.priceChange24hPercent,
+          price_updated_at: new Date().toISOString()
+        });
       }
     }
 
