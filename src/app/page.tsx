@@ -292,7 +292,16 @@ export default function Home() {
           throw new Error('Failed to fetch tokens');
         }
         const data = await tokenResponse.json();
-        setTokens(data);
+        // setTokens(data);
+        setTokens(
+          data.map((d: any) => {
+            const detais = priceData.data.find(
+              (a: any) => a.contract_address === d.contract_address
+            );
+            if (detais) return { ...d, ...detais };
+            return d;
+          })
+        );
       } catch (err) {
         setError('Failed to load tokens');
         console.error(err);
