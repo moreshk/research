@@ -354,7 +354,7 @@ export default function Home() {
         const aValue = a[sortConfig.field!];
         const bValue = b[sortConfig.field!];
         
-        // Handle null/undefined values
+        // Move null/undefined values to the end
         if (aValue === null || aValue === undefined) return 1;
         if (bValue === null || bValue === undefined) return -1;
         
@@ -533,12 +533,18 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span className={`font-medium text-${getBreakoutScoreColor(token.breakout_score)}-400`}>
-                        {token.breakout_score}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        ({token.breakout_level})
-                      </span>
+                      {token.breakout_score !== null ? (
+                        <>
+                          <span className={`font-medium text-${getBreakoutScoreColor(token.breakout_score)}-400`}>
+                            {token.breakout_score}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            ({token.breakout_level})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -574,23 +580,33 @@ export default function Home() {
                         <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">
                           <div className="text-center">
                             <div className="text-sm text-gray-400">Price Score</div>
-                            <div className="text-lg font-medium text-white">{token.price_score.toFixed(1)}</div>
+                            <div className="text-lg font-medium text-white">
+                              {token.price_score !== null ? token.price_score.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
                           <div className="text-center">
                             <div className="text-sm text-gray-400">Volume Score</div>
-                            <div className="text-lg font-medium text-white">{token.volume_score.toFixed(1)}</div>
+                            <div className="text-lg font-medium text-white">
+                              {token.volume_score !== null ? token.volume_score.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
                           <div className="text-center">
                             <div className="text-sm text-gray-400">Buy/Sell Score</div>
-                            <div className="text-lg font-medium text-white">{token.buy_sell_score.toFixed(1)}</div>
+                            <div className="text-lg font-medium text-white">
+                              {token.buy_sell_score !== null ? token.buy_sell_score.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
                           <div className="text-center">
                             <div className="text-sm text-gray-400">Wallet Score</div>
-                            <div className="text-lg font-medium text-white">{token.wallet_score.toFixed(1)}</div>
+                            <div className="text-lg font-medium text-white">
+                              {token.wallet_score !== null ? token.wallet_score.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
                           <div className="text-center">
                             <div className="text-sm text-gray-400">Trade Score</div>
-                            <div className="text-lg font-medium text-white">{token.trade_score.toFixed(1)}</div>
+                            <div className="text-lg font-medium text-white">
+                              {token.trade_score !== null ? token.trade_score.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
                         </div>
 

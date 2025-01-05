@@ -149,6 +149,25 @@ const calculateTradeScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate final breakout score
 export const calculateBreakoutScore = (data: TokenMetrics) => {
+  // Check if we have valid data
+  const hasValidData = Object.values(data).some(value => value !== null && value !== undefined);
+  
+  if (!hasValidData) {
+    return {
+      breakoutScore: null,
+      components: {
+        price: { score: null, details: {} },
+        volume: { score: null, details: {} },
+        buySell: { score: null, details: {} },
+        wallet: { score: null, details: {} },
+        trade: { score: null, details: {} }
+      },
+      interpretation: {
+        level: 'N/A'
+      }
+    };
+  }
+
   const priceScore = calculatePriceScore(data);
   const volumeScore = calculateVolumeScore(data);
   const buySellScore = calculateBuySellScore(data);
