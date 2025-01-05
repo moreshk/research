@@ -17,7 +17,7 @@ async function fetchTokenOverview(
 ) {
   // Skip hyperliquid chain
   if (chain.toLowerCase() === 'hyperliquid') {
-    console.log(`Skipping Hyperliquid chain as it's not supported by Birdeye`);
+    // console.log(`Skipping Hyperliquid chain as it's not supported by Birdeye`);
     return { success: false, error: 'Unsupported chain' };
   }
 

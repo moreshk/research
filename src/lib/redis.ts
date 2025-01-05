@@ -1,9 +1,9 @@
 import { Redis } from 'ioredis';
 
-console.log('Redis configuration:');
-console.log('Host:', '100.26.135.187');
-console.log('Port:', '6379');
-console.log('Password:', '[REDACTED]');
+// console.log('Redis configuration:');
+// console.log('Host:', '100.26.135.187');
+// console.log('Port:', '6379');
+// console.log('Password:', '[REDACTED]');
 
 const redis = new Redis({
   host: '100.26.135.187',
