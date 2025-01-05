@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           price: overviewData.data.price,
           market_cap: overviewData.data.mc,
           price_change_24h: overviewData.data.priceChange24hPercent,
-          price_updated_at: new Date().toISOString(),
+          price_updated_at: new Date().toISOString().replace('Z', '+00'),
           contract_address: token.contract_address,
           chain: token.id === 3 ? 'base' : token.chain
         });
