@@ -1,4 +1,8 @@
 import { Pool } from 'pg';
+import {
+  calculateBreakoutScore,
+  type TokenMetrics
+} from './scoring';
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -49,6 +53,30 @@ export async function getTokens() {
         is_meme,
         price,
         price_change_24h,
+        price_change_1h,
+        price_change_2h,
+        price_change_4h,
+        price_change_8h,
+        volume_change_1h,
+        volume_change_2h,
+        volume_change_4h,
+        volume_change_8h,
+        volume_buy_change_1h,
+        volume_sell_change_1h,
+        volume_buy_change_2h,
+        volume_sell_change_2h,
+        volume_buy_change_4h,
+        volume_sell_change_4h,
+        volume_buy_change_8h,
+        volume_sell_change_8h,
+        unique_wallet_change_1h,
+        unique_wallet_change_2h,
+        unique_wallet_change_4h,
+        unique_wallet_change_8h,
+        trade_change_1h,
+        trade_change_2h,
+        trade_change_4h,
+        trade_change_8h,
         price_updated_at,
         project_desc,
         github_url,
@@ -58,7 +86,55 @@ export async function getTokens() {
       FROM tokens 
       ORDER BY name ASC
     `);
-    return result.rows;
+
+    // Transform the results to include the calculated scores
+    const tokensWithScores = result.rows.map(token => {
+      const metrics: TokenMetrics = {
+        priceChange1hPercent: token.price_change_1h,
+        priceChange2hPercent: token.price_change_2h,
+        priceChange4hPercent: token.price_change_4h,
+        priceChange8hPercent: token.price_change_8h,
+        
+        v1hChangePercent: token.volume_change_1h,
+        v2hChangePercent: token.volume_change_2h,
+        v4hChangePercent: token.volume_change_4h,
+        v8hChangePercent: token.volume_change_8h,
+        
+        vBuy1hChangePercent: token.volume_buy_change_1h,
+        vBuy2hChangePercent: token.volume_buy_change_2h,
+        vBuy4hChangePercent: token.volume_buy_change_4h,
+        vBuy8hChangePercent: token.volume_buy_change_8h,
+        vSell1hChangePercent: token.volume_sell_change_1h,
+        vSell2hChangePercent: token.volume_sell_change_2h,
+        vSell4hChangePercent: token.volume_sell_change_4h,
+        vSell8hChangePercent: token.volume_sell_change_8h,
+        
+        uniqueWallet1hChangePercent: token.unique_wallet_change_1h,
+        uniqueWallet2hChangePercent: token.unique_wallet_change_2h,
+        uniqueWallet4hChangePercent: token.unique_wallet_change_4h,
+        uniqueWallet8hChangePercent: token.unique_wallet_change_8h,
+        
+        trade1hChangePercent: token.trade_change_1h,
+        trade2hChangePercent: token.trade_change_2h,
+        trade4hChangePercent: token.trade_change_4h,
+        trade8hChangePercent: token.trade_change_8h
+      };
+
+      const scores = calculateBreakoutScore(metrics);
+      
+      return {
+        ...token,
+        breakout_score: scores.breakoutScore,
+        price_score: scores.components.price.score,
+        volume_score: scores.components.volume.score,
+        buy_sell_score: scores.components.buySell.score,
+        wallet_score: scores.components.wallet.score,
+        trade_score: scores.components.trade.score,
+        breakout_level: scores.interpretation.level
+      };
+    });
+
+    return tokensWithScores;
   } catch (error) {
     console.error('Error fetching tokens:', error);
     throw error;
@@ -71,7 +147,31 @@ export async function updateTokenPrices(tokenUpdates: {
   id: number, 
   price: number, 
   market_cap: number, 
-  price_change_24h: number, 
+  price_change_24h: number,
+  price_change_1h: number,
+  price_change_2h: number,
+  price_change_4h: number,
+  price_change_8h: number,
+  volume_change_1h: number,
+  volume_change_2h: number,
+  volume_change_4h: number,
+  volume_change_8h: number,
+  volume_buy_change_1h: number,
+  volume_sell_change_1h: number,
+  volume_buy_change_2h: number,
+  volume_sell_change_2h: number,
+  volume_buy_change_4h: number,
+  volume_sell_change_4h: number,
+  volume_buy_change_8h: number,
+  volume_sell_change_8h: number,
+  unique_wallet_change_1h: number,
+  unique_wallet_change_2h: number,
+  unique_wallet_change_4h: number,
+  unique_wallet_change_8h: number,
+  trade_change_1h: number,
+  trade_change_2h: number,
+  trade_change_4h: number,
+  trade_change_8h: number,
   price_updated_at: string,
   contract_address: string,
   chain: string
@@ -80,20 +180,77 @@ export async function updateTokenPrices(tokenUpdates: {
   try {
     await client.query('BEGIN');
     console.log(`Updating ${tokenUpdates.length} tokens`);
+    
     for (const update of tokenUpdates) {
-      // Special handling for Virtuals (ID 3)
       const chainToStore = update.id === 3 ? 'ethereum' : update.chain;
       
-      console.log(
-        `Updating token ID ${update.id}: price=${update.price}, market_cap=${update.market_cap}, ` +
-        `contract=${update.contract_address}, chain=${update.chain}, stored_chain=${chainToStore}`
-      );
-
       await client.query(
-        'UPDATE tokens SET price = $1, market_cap = $2, price_change_24h = $3, price_updated_at = $4, chain = $5 WHERE id = $6',
-        [update.price, update.market_cap, update.price_change_24h, update.price_updated_at, chainToStore, update.id]
+        `UPDATE tokens SET 
+          price = $1, 
+          market_cap = $2, 
+          price_change_24h = $3,
+          price_change_1h = $4,
+          price_change_2h = $5,
+          price_change_4h = $6,
+          price_change_8h = $7,
+          volume_change_1h = $8,
+          volume_change_2h = $9,
+          volume_change_4h = $10,
+          volume_change_8h = $11,
+          volume_buy_change_1h = $12,
+          volume_sell_change_1h = $13,
+          volume_buy_change_2h = $14,
+          volume_sell_change_2h = $15,
+          volume_buy_change_4h = $16,
+          volume_sell_change_4h = $17,
+          volume_buy_change_8h = $18,
+          volume_sell_change_8h = $19,
+          unique_wallet_change_1h = $20,
+          unique_wallet_change_2h = $21,
+          unique_wallet_change_4h = $22,
+          unique_wallet_change_8h = $23,
+          trade_change_1h = $24,
+          trade_change_2h = $25,
+          trade_change_4h = $26,
+          trade_change_8h = $27,
+          price_updated_at = $28,
+          chain = $29
+        WHERE id = $30`,
+        [
+          update.price,
+          update.market_cap,
+          update.price_change_24h,
+          update.price_change_1h,
+          update.price_change_2h,
+          update.price_change_4h,
+          update.price_change_8h,
+          update.volume_change_1h,
+          update.volume_change_2h,
+          update.volume_change_4h,
+          update.volume_change_8h,
+          update.volume_buy_change_1h,
+          update.volume_sell_change_1h,
+          update.volume_buy_change_2h,
+          update.volume_sell_change_2h,
+          update.volume_buy_change_4h,
+          update.volume_sell_change_4h,
+          update.volume_buy_change_8h,
+          update.volume_sell_change_8h,
+          update.unique_wallet_change_1h,
+          update.unique_wallet_change_2h,
+          update.unique_wallet_change_4h,
+          update.unique_wallet_change_8h,
+          update.trade_change_1h,
+          update.trade_change_2h,
+          update.trade_change_4h,
+          update.trade_change_8h,
+          update.price_updated_at,
+          chainToStore,
+          update.id
+        ]
       );
     }
+    
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

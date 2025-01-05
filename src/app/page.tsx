@@ -27,6 +27,13 @@ type Token = {
   twitter_url: string | null;
   dexscreener_url: string | null;
   market_cap: number;
+  breakout_score: number;
+  price_score: number;
+  volume_score: number;
+  buy_sell_score: number;
+  wallet_score: number;
+  trade_score: number;
+  breakout_level: string;
 };
 
 interface SortableHeaderProps {
@@ -254,7 +261,7 @@ function formatPriceChange(change: number | string | null | undefined): string {
   return `${numericChange > 0 ? '+' : ''}${numericChange.toFixed(2)}%`;
 }
 
-type SortField = 'price' | 'price_change_24h' | 'market_cap' | null;
+type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
 type SortDirection = 'asc' | 'desc';
 
 export default function Home() {
@@ -371,6 +378,14 @@ export default function Home() {
     });
   };
 
+  const getBreakoutScoreColor = (score: number) => {
+    if (score >= 80) return 'green';
+    if (score >= 60) return 'blue';
+    if (score >= 40) return 'yellow';
+    if (score >= 20) return 'orange';
+    return 'red';
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -436,6 +451,12 @@ export default function Home() {
               <SortableHeader
                 field="market_cap"
                 label="Market Cap"
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                field="breakout_score"
+                label="Breakout Score"
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />
@@ -507,8 +528,18 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-white font-medium">
-                      {formatPrice(token.market_cap, true)}
+                      {token.market_cap ? formatPrice(token.market_cap, true) : 'N/A'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium text-${getBreakoutScoreColor(token.breakout_score)}-400`}>
+                        {token.breakout_score}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        ({token.breakout_level})
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-2">
@@ -537,9 +568,33 @@ export default function Home() {
                 </tr>
                 {expandedRows.has(token.id) && (
                   <tr className="bg-gray-800">
-                    <td colSpan={6} className="px-6 py-4">
+                    <td colSpan={7} className="px-6 py-4">
                       <div className="space-y-4">
-                        {/* Project Description */}
+                        {/* Breakout Score Components */}
+                        <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">
+                          <div className="text-center">
+                            <div className="text-sm text-gray-400">Price Score</div>
+                            <div className="text-lg font-medium text-white">{token.price_score.toFixed(1)}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-400">Volume Score</div>
+                            <div className="text-lg font-medium text-white">{token.volume_score.toFixed(1)}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-400">Buy/Sell Score</div>
+                            <div className="text-lg font-medium text-white">{token.buy_sell_score.toFixed(1)}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-400">Wallet Score</div>
+                            <div className="text-lg font-medium text-white">{token.wallet_score.toFixed(1)}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm text-gray-400">Trade Score</div>
+                            <div className="text-lg font-medium text-white">{token.trade_score.toFixed(1)}</div>
+                          </div>
+                        </div>
+
+                        {/* Existing expanded content */}
                         <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
                           {token.project_desc || 'No description available.'}
                         </div>
