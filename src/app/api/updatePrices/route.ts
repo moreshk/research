@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CACHE_KEY = "token_prices";
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
+const RATE_LIMIT = 14; // maximum requests per second
+const BATCH_DELAY = 1000; // 1 second delay between batches
+
+// Add this helper function for delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchTokenOverview(
   address: string,
@@ -53,34 +58,43 @@ export async function GET(request: NextRequest) {
     // If no cache, fetch fresh data
     const tokens = await getTokens();
 
-    const tokenPromises = tokens.map(async (token) => {
-      const overviewData = await fetchTokenOverview(
-        token.contract_address,
-        token.chain,
-        token.id
-      );
-
-      if (overviewData.success) {
-        return {
-          id: token.id,
-          price: overviewData.data.price,
-          market_cap: overviewData.data.mc,
-          price_change_24h: overviewData.data.priceChange24hPercent,
-          price_updated_at: new Date().toISOString().replace("Z", "+00"),
-          contract_address: token.contract_address,
-          chain: token.id === 3 ? "base" : token.chain,
-        };
-      } else {
-        console.error(
-          `Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}.`
+    // Process tokens in batches
+    const updates: any[] = [];
+    for (let i = 0; i < tokens.length; i += RATE_LIMIT) {
+      const batch = tokens.slice(i, i + RATE_LIMIT);
+      const batchPromises = batch.map(async (token) => {
+        const overviewData = await fetchTokenOverview(
+          token.contract_address,
+          token.chain,
+          token.id
         );
-        return null; // Return null for failed fetches
-      }
-    });
 
-    const updates = (await Promise.all(tokenPromises)).filter(
-      (update) => update !== null
-    );
+        if (overviewData.success) {
+          return {
+            id: token.id,
+            price: overviewData.data.price,
+            market_cap: overviewData.data.mc,
+            price_change_24h: overviewData.data.priceChange24hPercent,
+            price_updated_at: new Date().toISOString().replace("Z", "+00"),
+            contract_address: token.contract_address,
+            chain: token.id === 3 ? "base" : token.chain,
+          };
+        } else {
+          console.error(
+            `Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}.`
+          );
+          return null;
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      updates.push(...batchResults.filter((update) => update !== null));
+
+      // If this isn't the last batch, add delay before the next batch
+      if (i + RATE_LIMIT < tokens.length) {
+        await delay(BATCH_DELAY);
+      }
+    }
 
     if (updates.length > 0) {
       // Update token prices in the database
