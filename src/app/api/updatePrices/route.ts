@@ -12,67 +12,89 @@ async function fetchTokenOverview(
 ) {
   const apiChain = tokenId === 3 ? "ethereum" : chain.toLowerCase();
   const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
-  const response = await fetch(url, {
-    headers: {
-      "X-API-KEY": process.env.BIRDEYE_API_KEY!,
-      accept: "application/json",
-      "x-chain": apiChain,
-    },
-  });
-  return response.json();
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "X-API-KEY": process.env.BIRDEYE_API_KEY!,
+        accept: "application/json",
+        "x-chain": apiChain,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch token overview: ${response.statusText}`);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(
+      `Error fetching token overview for ${address} on ${chain}:`,
+      error
+    );
+    return { success: false, error: error.message };
+  }
 }
 
 export async function GET(request: NextRequest) {
   try {
     // Check cache first
     const cachedData = await redis.get(CACHE_KEY);
-    if (cachedData && JSON.parse(cachedData).length) {
-      return NextResponse.json({
-        success: true,
-        message: "Prices retrieved from cache",
-        cached: true,
-        data: JSON.parse(cachedData),
-      });
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      if (parsedData.length) {
+        return NextResponse.json({
+          success: true,
+          message: "Prices retrieved from cache",
+          cached: true,
+          data: parsedData,
+        });
+      }
     }
 
     // If no cache, fetch fresh data
     const tokens = await getTokens();
 
-    const updates = await Promise.all(
-      tokens.map(async (token) => {
-        const overviewData = await fetchTokenOverview(
-          token.contract_address,
-          token.chain,
-          token.id
-        );
+    const tokenPromises = tokens.map(async (token) => {
+      const overviewData = await fetchTokenOverview(
+        token.contract_address,
+        token.chain,
+        token.id
+      );
 
-        if (overviewData.success) {
-          return {
-            id: token.id,
-            price: overviewData.data.price,
-            market_cap: overviewData.data.mc,
-            price_change_24h: overviewData.data.priceChange24hPercent,
-            price_updated_at: new Date().toISOString().replace("Z", "+00"),
-            contract_address: token.contract_address,
-            chain: token.id === 3 ? "base" : token.chain,
-          };
-        } else {
-          console.error(
-            `Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}. Error:`,
-            overviewData.error || "Unknown error"
-          );
-          return null; // Handle failed fetch
-        }
-      })
+      if (overviewData.success) {
+        return {
+          id: token.id,
+          price: overviewData.data.price,
+          market_cap: overviewData.data.mc,
+          price_change_24h: overviewData.data.priceChange24hPercent,
+          price_updated_at: new Date().toISOString().replace("Z", "+00"),
+          contract_address: token.contract_address,
+          chain: token.id === 3 ? "base" : token.chain,
+        };
+      } else {
+        console.error(
+          `Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}.`
+        );
+        return null; // Return null for failed fetches
+      }
+    });
+
+    const updates = (await Promise.all(tokenPromises)).filter(
+      (update) => update !== null
     );
 
-    const validUpdates = updates.filter((update) => update !== null);
-    await updateTokenPrices(validUpdates);
-    await redis.setex(CACHE_KEY, CACHE_EXPIRY, JSON.stringify(updates));
+    if (updates.length > 0) {
+      // Update token prices in the database
+      await updateTokenPrices(updates);
+
+      // Cache the updated data
+      await redis.setex(CACHE_KEY, CACHE_EXPIRY, JSON.stringify(updates));
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Prices updated successfully",
+      message:
+        updates.length > 0
+          ? "Prices updated successfully"
+          : "No valid updates available",
       cached: false,
       data: updates,
     });
