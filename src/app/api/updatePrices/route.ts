@@ -15,6 +15,12 @@ async function fetchTokenOverview(
   chain: string,
   tokenId: number
 ) {
+  // Skip hyperliquid chain
+  if (chain.toLowerCase() === 'hyperliquid') {
+    console.log(`Skipping Hyperliquid chain as it's not supported by Birdeye`);
+    return { success: false, error: 'Unsupported chain' };
+  }
+
   const apiChain = tokenId === 3 ? "ethereum" : chain.toLowerCase();
   const url = `https://public-api.birdeye.so/defi/token_overview?address=${address}`;
   try {
