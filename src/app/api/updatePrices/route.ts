@@ -29,6 +29,7 @@ async function fetchTokenOverview(
       `Error fetching token overview for ${address} on ${chain}:`,
       error
     );
+    // @ts-ignore
     return { success: false, error: error.message };
   }
 }
