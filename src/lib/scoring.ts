@@ -47,12 +47,6 @@ interface ComponentScore {
   };
 }
 
-// Normalize any value to 0-100 range
-const normalizeScore = (value: number, maxRange: number): number => {
-  const normalized = ((value + maxRange) / (2 * maxRange)) * 100;
-  return Math.max(0, Math.min(100, normalized));
-};
-
 // Calculate price momentum score
 const calculatePriceScore = (data: TokenMetrics): ComponentScore => {
   const weights = { 
@@ -62,16 +56,14 @@ const calculatePriceScore = (data: TokenMetrics): ComponentScore => {
     '2h': 0.12,  // 12% weight for 2h
     '1h': 0.08   // 8% weight for 1h
   };
-  const maxPriceChange = 20; // 20% max price change consideration
   
   const details = {
-    '24h': normalizeScore(data.priceChange24hPercent, maxPriceChange),
-    '8h': normalizeScore(data.priceChange8hPercent, maxPriceChange),
-    '4h': normalizeScore(data.priceChange4hPercent, maxPriceChange),
-    '2h': normalizeScore(data.priceChange2hPercent, maxPriceChange),
-    '1h': normalizeScore(data.priceChange1hPercent, maxPriceChange)
+    '24h': data.priceChange24hPercent,
+    '8h': data.priceChange8hPercent,
+    '4h': data.priceChange4hPercent,
+    '2h': data.priceChange2hPercent,
+    '1h': data.priceChange1hPercent
   };
-  
   const score = Object.entries(weights).reduce(
     (acc, [period, weight]) => acc + details[period as keyof typeof details] * weight,
     0
@@ -89,14 +81,13 @@ const calculateVolumeScore = (data: TokenMetrics): ComponentScore => {
     '2h': 0.12, 
     '1h': 0.08 
   };
-  const maxVolumeChange = 200;
   
   const details = {
-    '24h': normalizeScore(data.v24hChangePercent, maxVolumeChange),
-    '8h': normalizeScore(data.v8hChangePercent, maxVolumeChange),
-    '4h': normalizeScore(data.v4hChangePercent, maxVolumeChange),
-    '2h': normalizeScore(data.v2hChangePercent, maxVolumeChange),
-    '1h': normalizeScore(data.v1hChangePercent, maxVolumeChange)
+    '24h': data.v24hChangePercent,
+    '8h': data.v8hChangePercent,
+    '4h': data.v4hChangePercent,
+    '2h': data.v2hChangePercent,
+    '1h': data.v1hChangePercent
   };
   
   const score = Object.entries(weights).reduce(
@@ -109,14 +100,20 @@ const calculateVolumeScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate buy/sell ratio score
 const calculateBuySellScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
-  const maxRatioDiff = 150; // 150% max difference consideration
+  const weights = { 
+    '24h': 0.4, 
+    '8h': 0.25, 
+    '4h': 0.15, 
+    '2h': 0.12, 
+    '1h': 0.08 
+  };
   
   const details = {
-    '1h': normalizeScore(data.vBuy1hChangePercent - data.vSell1hChangePercent, maxRatioDiff),
-    '2h': normalizeScore(data.vBuy2hChangePercent - data.vSell2hChangePercent, maxRatioDiff),
-    '4h': normalizeScore(data.vBuy4hChangePercent - data.vSell4hChangePercent, maxRatioDiff),
-    '8h': normalizeScore(data.vBuy8hChangePercent - data.vSell8hChangePercent, maxRatioDiff)
+    '24h': data.vBuy24hChangePercent - data.vSell24hChangePercent,
+    '8h': data.vBuy8hChangePercent - data.vSell8hChangePercent,
+    '4h': data.vBuy4hChangePercent - data.vSell4hChangePercent,
+    '2h': data.vBuy2hChangePercent - data.vSell2hChangePercent,
+    '1h': data.vBuy1hChangePercent - data.vSell1hChangePercent
   };
   
   const score = Object.entries(weights).reduce(
@@ -129,14 +126,20 @@ const calculateBuySellScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate wallet growth score
 const calculateWalletScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
-  const maxWalletChange = 50; // 50% max wallet growth consideration
+  const weights = { 
+    '24h': 0.4, 
+    '8h': 0.25, 
+    '4h': 0.15, 
+    '2h': 0.12, 
+    '1h': 0.08 
+  };
   
   const details = {
-    '1h': normalizeScore(data.uniqueWallet1hChangePercent, maxWalletChange),
-    '2h': normalizeScore(data.uniqueWallet2hChangePercent, maxWalletChange),
-    '4h': normalizeScore(data.uniqueWallet4hChangePercent, maxWalletChange),
-    '8h': normalizeScore(data.uniqueWallet8hChangePercent, maxWalletChange)
+    '24h': data.uniqueWallet24hChangePercent,
+    '8h': data.uniqueWallet8hChangePercent,
+    '4h': data.uniqueWallet4hChangePercent,
+    '2h': data.uniqueWallet2hChangePercent,
+    '1h': data.uniqueWallet1hChangePercent
   };
   
   const score = Object.entries(weights).reduce(
@@ -149,14 +152,20 @@ const calculateWalletScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate trade count score
 const calculateTradeScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
-  const maxTradeChange = 100; // 100% max trade count change consideration
+  const weights = { 
+    '24h': 0.4, 
+    '8h': 0.25, 
+    '4h': 0.15, 
+    '2h': 0.12, 
+    '1h': 0.08 
+  };
   
   const details = {
-    '1h': normalizeScore(data.trade1hChangePercent, maxTradeChange),
-    '2h': normalizeScore(data.trade2hChangePercent, maxTradeChange),
-    '4h': normalizeScore(data.trade4hChangePercent, maxTradeChange),
-    '8h': normalizeScore(data.trade8hChangePercent, maxTradeChange)
+    '24h': data.trade24hChangePercent,
+    '8h': data.trade8hChangePercent,
+    '4h': data.trade4hChangePercent,
+    '2h': data.trade2hChangePercent,
+    '1h': data.trade1hChangePercent
   };
   
   const score = Object.entries(weights).reduce(
@@ -168,7 +177,7 @@ const calculateTradeScore = (data: TokenMetrics): ComponentScore => {
 };
 
 // Calculate final breakout score
-export const calculateBreakoutScore = (data: TokenMetrics) => {
+const calculateBreakoutScore = (data: TokenMetrics) => {
   // Check if we have valid data
   const hasValidData = Object.values(data).some(value => value !== null && value !== undefined);
   
@@ -222,11 +231,21 @@ export const calculateBreakoutScore = (data: TokenMetrics) => {
       trade: tradeScore
     },
     interpretation: {
-      level: finalScore >= 80 ? 'Strong Breakout' :
-             finalScore >= 60 ? 'Bullish' :
-             finalScore >= 40 ? 'Neutral' :
-             finalScore >= 20 ? 'Slightly Bearish' :
-                               'Weak/Bearish'
+      level: finalScore >= 15 ? 'Strong Breakout' :
+             finalScore >= 10 ? 'Bullish' :
+             finalScore >= 0 ? 'Neutral' :
+             finalScore >= -10 ? 'Slightly Bearish' :
+                              'Weak/Bearish'
     }
   };
+};
+
+export {
+  calculateBreakoutScore,
+  calculatePriceScore,
+  calculateVolumeScore,
+  calculateBuySellScore,
+  calculateWalletScore,
+  calculateTradeScore,
+  type ComponentScore
 }; 
