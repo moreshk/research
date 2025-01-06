@@ -75,11 +75,11 @@ const calculatePriceScore = (data: TokenMetrics): ComponentScore => {
 // Calculate volume momentum score
 const calculateVolumeScore = (data: TokenMetrics): ComponentScore => {
   const weights = { 
-    '24h': 0.4, 
-    '8h': 0.25, 
-    '4h': 0.15, 
-    '2h': 0.12, 
-    '1h': 0.08 
+    '24h': 0.08,
+    '8h': 0.12,
+    '4h': 0.15,
+    '2h': 0.25,
+    '1h': 0.4
   };
   
   const details = {
@@ -190,9 +190,6 @@ const calculateBreakoutScore = (data: TokenMetrics) => {
         buySell: { score: null, details: {} },
         wallet: { score: null, details: {} },
         trade: { score: null, details: {} }
-      },
-      interpretation: {
-        level: 'N/A'
       }
     };
   }
@@ -206,8 +203,8 @@ const calculateBreakoutScore = (data: TokenMetrics) => {
   // Component weights
   const weights = {
     price: 0.3,    // 30%
-    volume: 0.25,  // 25%
-    buySell: 0.2,  // 20%
+    volume: 0.15,  // 25%
+    buySell: 0.3,  // 20%
     wallet: 0.15,  // 15%
     trade: 0.1     // 10%
   };
@@ -229,13 +226,6 @@ const calculateBreakoutScore = (data: TokenMetrics) => {
       buySell: buySellScore,
       wallet: walletScore,
       trade: tradeScore
-    },
-    interpretation: {
-      level: finalScore >= 15 ? 'Strong Breakout' :
-             finalScore >= 10 ? 'Bullish' :
-             finalScore >= 0 ? 'Neutral' :
-             finalScore >= -10 ? 'Slightly Bearish' :
-                              'Weak/Bearish'
     }
   };
 };

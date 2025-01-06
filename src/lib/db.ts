@@ -141,7 +141,7 @@ export async function getTokens() {
         buy_sell_score: scores.components.buySell.score,
         wallet_score: scores.components.wallet.score,
         trade_score: scores.components.trade.score,
-        breakout_level: scores.interpretation.level
+        breakout_level: null
       };
     });
 

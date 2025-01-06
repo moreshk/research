@@ -33,12 +33,11 @@ type Token = {
   buy_sell_score: number;
   wallet_score: number;
   trade_score: number;
-  breakout_level: string;
 };
 
 interface SortableHeaderProps {
   field: SortField;
-  label: string;
+  label: string | React.ReactNode;
   sortConfig: {
     field: SortField;
     direction: SortDirection;
@@ -106,6 +105,30 @@ const TypeTooltip = () => (
           <p>
             <strong>Meme:</strong> A pure meme is a content only play which may or may not be powered by AI. 
             for eg: FARTCOIN.
+          </p>
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+);
+
+const MomentumTooltip = () => (
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <button className="inline-flex items-center ml-1">
+          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
+          sideOffset={5}
+        >
+          <p>
+            We determine momentum by accounting for a number of parameters such as price trends, 
+            volume trends, number of buyers vs sellers and so on
           </p>
           <Tooltip.Arrow className="fill-gray-800" />
         </Tooltip.Content>
@@ -261,6 +284,28 @@ function formatPriceChange(change: number | string | null | undefined): string {
   return `${numericChange > 0 ? '+' : ''}${numericChange.toFixed(2)}%`;
 }
 
+// Add new tooltip component for scores
+const ScoreTooltip = ({ content }: { content: string }) => (
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <button className="inline-flex items-center ml-1">
+          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
+          sideOffset={5}
+        >
+          <p>{content}</p>
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+);
+
 type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
 type SortDirection = 'asc' | 'desc';
 
@@ -381,11 +426,8 @@ export default function Home() {
   };
 
   const getBreakoutScoreColor = (score: number) => {
-    if (score >= 80) return 'green';
-    if (score >= 60) return 'blue';
-    if (score >= 40) return 'yellow';
-    if (score >= 20) return 'orange';
-    return 'red';
+    if (score === 0) return 'gray';
+    return score > 0 ? 'green' : 'red';
   };
 
   if (loading) {
@@ -458,7 +500,12 @@ export default function Home() {
               />
               <SortableHeader
                 field="breakout_score"
-                label="Breakout Score"
+                label={
+                  <div className="flex items-center">
+                    Momentum
+                    <MomentumTooltip />
+                  </div>
+                }
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />
@@ -536,14 +583,12 @@ export default function Home() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {token.breakout_score !== null ? (
-                        <>
-                          <span className={`font-medium text-${getBreakoutScoreColor(token.breakout_score)}-400`}>
-                            {token.breakout_score}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ({token.breakout_level})
-                          </span>
-                        </>
+                        <span className={`font-medium ${
+                          token.breakout_score === 0 ? 'text-gray-400' :
+                          token.breakout_score > 0 ? 'text-green-400' : 'text-red-400'
+                        }`}>
+                          {token.breakout_score > 0 ? `+${token.breakout_score}` : token.breakout_score}
+                        </span>
                       ) : (
                         <span className="text-gray-400">N/A</span>
                       )}
@@ -581,31 +626,46 @@ export default function Home() {
                         {/* Breakout Score Components */}
                         <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">
                           <div className="text-center">
-                            <div className="text-sm text-gray-400">Price Score</div>
+                            <div className="text-sm text-gray-400 flex items-center justify-center">
+                              Price Score
+                              <ScoreTooltip content="Weighted price change for the last 24h" />
+                            </div>
                             <div className="text-lg font-medium text-white">
                               {token.price_score !== null ? token.price_score.toFixed(1) : 'N/A'}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-sm text-gray-400">Volume Score</div>
+                            <div className="text-sm text-gray-400 flex items-center justify-center">
+                              Volume Score
+                              <ScoreTooltip content="Weighted volume change for the last 24h" />
+                            </div>
                             <div className="text-lg font-medium text-white">
                               {token.volume_score !== null ? token.volume_score.toFixed(1) : 'N/A'}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-sm text-gray-400">Buy/Sell Score</div>
+                            <div className="text-sm text-gray-400 flex items-center justify-center">
+                              Buy/Sell Score
+                              <ScoreTooltip content="Weighted difference between buyers and sellers for the last 24h" />
+                            </div>
                             <div className="text-lg font-medium text-white">
                               {token.buy_sell_score !== null ? token.buy_sell_score.toFixed(1) : 'N/A'}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-sm text-gray-400">Wallet Score</div>
+                            <div className="text-sm text-gray-400 flex items-center justify-center">
+                              Holder Score
+                              <ScoreTooltip content="Weighted unique wallet count for the last 24h" />
+                            </div>
                             <div className="text-lg font-medium text-white">
                               {token.wallet_score !== null ? token.wallet_score.toFixed(1) : 'N/A'}
                             </div>
                           </div>
                           <div className="text-center">
-                            <div className="text-sm text-gray-400">Trade Score</div>
+                            <div className="text-sm text-gray-400 flex items-center justify-center">
+                              Trade Score
+                              <ScoreTooltip content="Weighted trade counts for the last 24h" />
+                            </div>
                             <div className="text-lg font-medium text-white">
                               {token.trade_score !== null ? token.trade_score.toFixed(1) : 'N/A'}
                             </div>
