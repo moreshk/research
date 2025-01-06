@@ -289,26 +289,28 @@ export default function Home() {
         const priceResponse = await fetch('/api/updatePrices');
         const priceData = await priceResponse.json();
         
-        if (!priceData.success) {
-          console.warn('Price update failed:', priceData.error);
-        }
-        
         // Then fetch the tokens (which will include the latest prices)
         const tokenResponse = await fetch('/api/tokens');
         if (!tokenResponse.ok) {
           throw new Error('Failed to fetch tokens');
         }
         const data = await tokenResponse.json();
-        // setTokens(data);
-        setTokens(
-          data.map((d: any) => {
-            const detais = priceData.data.find(
-              (a: any) => a.contract_address === d.contract_address
-            );
-            if (detais) return { ...d, ...detais };
-            return d;
-          })
-        );
+
+        // Check if priceData and priceData.data exist before using find
+        if (priceData && priceData.success && Array.isArray(priceData.data)) {
+          setTokens(
+            data.map((d: any) => {
+              const details = priceData.data.find(
+                (a: any) => a.contract_address === d.contract_address
+              );
+              if (details) return { ...d, ...details };
+              return d;
+            })
+          );
+        } else {
+          // If no price data, just set the tokens as is
+          setTokens(data);
+        }
       } catch (err) {
         setError('Failed to load tokens');
         console.error(err);

@@ -82,7 +82,12 @@ export async function getTokens() {
         github_url,
         github_analysis,
         twitter_url,
-        dexscreener_url
+        dexscreener_url,
+        v24h_change_percent,
+        vbuy24h_change_percent,
+        vsell24h_change_percent,
+        unique_wallet24h_change_percent,
+        trade24h_change_percent
       FROM tokens 
       ORDER BY name ASC
     `);
@@ -90,30 +95,36 @@ export async function getTokens() {
     // Transform the results to include the calculated scores
     const tokensWithScores = result.rows.map(token => {
       const metrics: TokenMetrics = {
+        priceChange24hPercent: token.price_change_24h,
         priceChange1hPercent: token.price_change_1h,
         priceChange2hPercent: token.price_change_2h,
         priceChange4hPercent: token.price_change_4h,
         priceChange8hPercent: token.price_change_8h,
         
+        v24hChangePercent: token.v24h_change_percent,
         v1hChangePercent: token.volume_change_1h,
         v2hChangePercent: token.volume_change_2h,
         v4hChangePercent: token.volume_change_4h,
         v8hChangePercent: token.volume_change_8h,
         
+        vBuy24hChangePercent: token.vbuy24h_change_percent,
         vBuy1hChangePercent: token.volume_buy_change_1h,
         vBuy2hChangePercent: token.volume_buy_change_2h,
         vBuy4hChangePercent: token.volume_buy_change_4h,
         vBuy8hChangePercent: token.volume_buy_change_8h,
+        vSell24hChangePercent: token.vsell24h_change_percent,
         vSell1hChangePercent: token.volume_sell_change_1h,
         vSell2hChangePercent: token.volume_sell_change_2h,
         vSell4hChangePercent: token.volume_sell_change_4h,
         vSell8hChangePercent: token.volume_sell_change_8h,
         
+        uniqueWallet24hChangePercent: token.unique_wallet24h_change_percent,
         uniqueWallet1hChangePercent: token.unique_wallet_change_1h,
         uniqueWallet2hChangePercent: token.unique_wallet_change_2h,
         uniqueWallet4hChangePercent: token.unique_wallet_change_4h,
         uniqueWallet8hChangePercent: token.unique_wallet_change_8h,
         
+        trade24hChangePercent: token.trade24h_change_percent,
         trade1hChangePercent: token.trade_change_1h,
         trade2hChangePercent: token.trade_change_2h,
         trade4hChangePercent: token.trade_change_4h,
@@ -174,7 +185,12 @@ export async function updateTokenPrices(tokenUpdates: {
   trade_change_8h: number,
   price_updated_at: string,
   contract_address: string,
-  chain: string
+  chain: string,
+  v24h_change_percent: number,
+  vbuy24h_change_percent: number,
+  vsell24h_change_percent: number,
+  unique_wallet24h_change_percent: number,
+  trade24h_change_percent: number
 }[]) {
   const client = await pool.connect();
   try {
@@ -214,8 +230,13 @@ export async function updateTokenPrices(tokenUpdates: {
           trade_change_4h = $26,
           trade_change_8h = $27,
           price_updated_at = $28,
-          chain = $29
-        WHERE id = $30`,
+          chain = $29,
+          v24h_change_percent = $30,
+          vbuy24h_change_percent = $31,
+          vsell24h_change_percent = $32,
+          unique_wallet24h_change_percent = $33,
+          trade24h_change_percent = $34
+        WHERE id = $35`,
         [
           update.price,
           update.market_cap,
@@ -246,6 +267,11 @@ export async function updateTokenPrices(tokenUpdates: {
           update.trade_change_8h,
           update.price_updated_at,
           chainToStore,
+          update.v24h_change_percent,
+          update.vbuy24h_change_percent,
+          update.vsell24h_change_percent,
+          update.unique_wallet24h_change_percent,
+          update.trade24h_change_percent,
           update.id
         ]
       );

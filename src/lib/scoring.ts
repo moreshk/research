@@ -1,33 +1,39 @@
 export interface TokenMetrics {
   // Price changes
+  priceChange24hPercent: number;
   priceChange1hPercent: number;
   priceChange2hPercent: number;
   priceChange4hPercent: number;
   priceChange8hPercent: number;
   
   // Volume changes
+  v24hChangePercent: number;
   v1hChangePercent: number;
   v2hChangePercent: number;
   v4hChangePercent: number;
   v8hChangePercent: number;
   
   // Buy/Sell changes
+  vBuy24hChangePercent: number;
   vBuy1hChangePercent: number;
   vBuy2hChangePercent: number;
   vBuy4hChangePercent: number;
   vBuy8hChangePercent: number;
+  vSell24hChangePercent: number;
   vSell1hChangePercent: number;
   vSell2hChangePercent: number;
   vSell4hChangePercent: number;
   vSell8hChangePercent: number;
   
   // Wallet changes
+  uniqueWallet24hChangePercent: number;
   uniqueWallet1hChangePercent: number;
   uniqueWallet2hChangePercent: number;
   uniqueWallet4hChangePercent: number;
   uniqueWallet8hChangePercent: number;
   
   // Trade count changes
+  trade24hChangePercent: number;
   trade1hChangePercent: number;
   trade2hChangePercent: number;
   trade4hChangePercent: number;
@@ -49,14 +55,21 @@ const normalizeScore = (value: number, maxRange: number): number => {
 
 // Calculate price momentum score
 const calculatePriceScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.4, '2h': 0.3, '4h': 0.2, '8h': 0.1 };
+  const weights = { 
+    '24h': 0.4,  // 40% weight for 24h
+    '8h': 0.25,  // 25% weight for 8h
+    '4h': 0.15,  // 15% weight for 4h
+    '2h': 0.12,  // 12% weight for 2h
+    '1h': 0.08   // 8% weight for 1h
+  };
   const maxPriceChange = 20; // 20% max price change consideration
   
   const details = {
-    '1h': normalizeScore(data.priceChange1hPercent, maxPriceChange),
-    '2h': normalizeScore(data.priceChange2hPercent, maxPriceChange),
+    '24h': normalizeScore(data.priceChange24hPercent, maxPriceChange),
+    '8h': normalizeScore(data.priceChange8hPercent, maxPriceChange),
     '4h': normalizeScore(data.priceChange4hPercent, maxPriceChange),
-    '8h': normalizeScore(data.priceChange8hPercent, maxPriceChange)
+    '2h': normalizeScore(data.priceChange2hPercent, maxPriceChange),
+    '1h': normalizeScore(data.priceChange1hPercent, maxPriceChange)
   };
   
   const score = Object.entries(weights).reduce(
@@ -69,14 +82,21 @@ const calculatePriceScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate volume momentum score
 const calculateVolumeScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.4, '2h': 0.3, '4h': 0.2, '8h': 0.1 };
-  const maxVolumeChange = 200; // 200% max volume change consideration
+  const weights = { 
+    '24h': 0.4, 
+    '8h': 0.25, 
+    '4h': 0.15, 
+    '2h': 0.12, 
+    '1h': 0.08 
+  };
+  const maxVolumeChange = 200;
   
   const details = {
-    '1h': normalizeScore(data.v1hChangePercent, maxVolumeChange),
-    '2h': normalizeScore(data.v2hChangePercent, maxVolumeChange),
+    '24h': normalizeScore(data.v24hChangePercent, maxVolumeChange),
+    '8h': normalizeScore(data.v8hChangePercent, maxVolumeChange),
     '4h': normalizeScore(data.v4hChangePercent, maxVolumeChange),
-    '8h': normalizeScore(data.v8hChangePercent, maxVolumeChange)
+    '2h': normalizeScore(data.v2hChangePercent, maxVolumeChange),
+    '1h': normalizeScore(data.v1hChangePercent, maxVolumeChange)
   };
   
   const score = Object.entries(weights).reduce(
@@ -89,7 +109,7 @@ const calculateVolumeScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate buy/sell ratio score
 const calculateBuySellScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.4, '2h': 0.3, '4h': 0.2, '8h': 0.1 };
+  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
   const maxRatioDiff = 150; // 150% max difference consideration
   
   const details = {
@@ -109,7 +129,7 @@ const calculateBuySellScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate wallet growth score
 const calculateWalletScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.4, '2h': 0.3, '4h': 0.2, '8h': 0.1 };
+  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
   const maxWalletChange = 50; // 50% max wallet growth consideration
   
   const details = {
@@ -129,7 +149,7 @@ const calculateWalletScore = (data: TokenMetrics): ComponentScore => {
 
 // Calculate trade count score
 const calculateTradeScore = (data: TokenMetrics): ComponentScore => {
-  const weights = { '1h': 0.4, '2h': 0.3, '4h': 0.2, '8h': 0.1 };
+  const weights = { '1h': 0.1, '2h': 0.2, '4h': 0.3, '8h': 0.4 };
   const maxTradeChange = 100; // 100% max trade count change consideration
   
   const details = {

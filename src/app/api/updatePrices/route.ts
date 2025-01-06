@@ -108,6 +108,11 @@ export async function GET(request: NextRequest) {
             price_updated_at: new Date().toISOString().replace("Z", "+00"),
             contract_address: token.contract_address,
             chain: token.id === 3 ? "base" : token.chain,
+            v24h_change_percent: overviewData.data.v24hChangePercent,
+            vbuy24h_change_percent: overviewData.data.vBuy24hChangePercent,
+            vsell24h_change_percent: overviewData.data.vSell24hChangePercent,
+            unique_wallet24h_change_percent: overviewData.data.uniqueWallet24hChangePercent,
+            trade24h_change_percent: overviewData.data.trade24hChangePercent,
           };
         } else {
           console.error(
