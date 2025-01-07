@@ -20,9 +20,19 @@ export async function GET(request: NextRequest) {
   const cachedData = await redis.get(cacheKey);
 
   if (cachedData) {
-    return NextResponse.json(JSON.parse(cachedData));
+    console.log(`[GitHub API] Cache HIT for ${owner}/${repo}`);
+    const parsedData = JSON.parse(cachedData);
+    // Add cache timestamp to response
+    return NextResponse.json({
+      ...parsedData,
+      _cache: {
+        hit: true,
+        timestamp: new Date().toISOString()
+      }
+    });
   }
 
+  console.log(`[GitHub API] Cache MISS for ${owner}/${repo} - fetching fresh data`);
   const pat = process.env.GITHUB_PAT;
   if (!pat) {
     return NextResponse.json({ error: 'GitHub PAT not configured' }, { status: 500 });
@@ -30,10 +40,22 @@ export async function GET(request: NextRequest) {
 
   try {
     const data = await fetchAllRepoData(owner, repo, pat);
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', 24 * 60 * 60); // Cache for 24 hours
-    return NextResponse.json(data);
+    const timestamp = new Date().toISOString();
+    const dataWithMeta = {
+      ...data,
+      _cache: {
+        hit: false,
+        timestamp,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      }
+    };
+    
+    await redis.set(cacheKey, JSON.stringify(dataWithMeta), 'EX', 24 * 60 * 60); // Cache for 24 hours
+    console.log(`[GitHub API] Successfully cached data for ${owner}/${repo}`);
+    
+    return NextResponse.json(dataWithMeta);
   } catch (error) {
-    console.error('Error fetching repository data:', error);
+    console.error(`[GitHub API] Error fetching data for ${owner}/${repo}:`, error);
     return NextResponse.json({ error: 'Failed to fetch repository data' }, { status: 500 });
   }
 }
