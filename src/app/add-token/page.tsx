@@ -1,9 +1,9 @@
 import AddTokenForm from '@/components/AddTokenForm';
 
 export default function AddTokenPage() {
-  return null;
+//   return null;
   
-  /* Original code
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8 text-white">Add New Token</h1>
@@ -12,5 +12,5 @@ export default function AddTokenPage() {
       </div>
     </div>
   );
-  */
+  
 } 

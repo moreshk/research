@@ -7,9 +7,6 @@ const AddTokenForm: React.FC = () => {
   const [formData, setFormData] = useState({
     contract_address: '',
     chain: '',
-    name: '',
-    symbol: '',
-    description: '',
     is_agent: false,
     is_framework: false,
     is_application: false,
@@ -63,9 +60,6 @@ const AddTokenForm: React.FC = () => {
       setFormData({
         contract_address: '',
         chain: '',
-        name: '',
-        symbol: '',
-        description: '',
         is_agent: false,
         is_framework: false,
         is_application: false,
@@ -133,52 +127,6 @@ const AddTokenForm: React.FC = () => {
               ))}
             </select>
           </div>
-        </div>
-      </div>
-
-      {/* Basic Information Section */}
-      <div className={sectionClasses}>
-        <h2 className="text-xl font-semibold text-white border-b border-gray-700 pb-2 mb-6">Basic Information</h2>
-        
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <div>
-            <label htmlFor="name" className={labelClasses}>Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Token name"
-              className={inputClasses}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="symbol" className={labelClasses}>Symbol</label>
-            <input
-              type="text"
-              id="symbol"
-              name="symbol"
-              value={formData.symbol}
-              onChange={handleChange}
-              placeholder="Token symbol"
-              className={inputClasses}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <label htmlFor="description" className={labelClasses}>Description</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Enter token description"
-            className={`${inputClasses} resize-y min-h-[100px]`}
-          />
         </div>
       </div>
 
