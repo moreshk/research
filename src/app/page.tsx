@@ -102,7 +102,9 @@ export default function Home() {
         (filters.type === 'agent' && token.is_agent) ||
         (filters.type === 'framework' && token.is_framework) ||
         (filters.type === 'application' && token.is_application) ||
-        (filters.type === 'meme' && token.is_meme);
+        (filters.type === 'meme' && token.is_meme) ||
+        (filters.type === 'kol' && token.is_kol) ||
+        (filters.type === 'defi' && token.is_defi);
       
       const chainMatch = filters.chain === 'all' || token.chain === filters.chain;
       const ecosystemMatch = filters.ecosystem === 'all' || token.ecosystem === filters.ecosystem;
@@ -184,6 +186,8 @@ export default function Home() {
           <option value="framework">Framework</option>
           <option value="application">Application</option>
           <option value="meme">Meme</option>
+          <option value="kol">KOL</option>
+          <option value="defi">DeFi</option>
         </select>
 
         <ChainSelect
@@ -351,7 +355,7 @@ export default function Home() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {token.is_agent && (
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-200">
                           Agent
@@ -370,6 +374,16 @@ export default function Home() {
                       {token.is_meme && (
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-900 text-pink-200">
                           Meme
+                        </span>
+                      )}
+                      {token.is_kol && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900 text-blue-200">
+                          KOL
+                        </span>
+                      )}
+                      {token.is_defi && (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-900 text-orange-200">
+                          DeFi
                         </span>
                       )}
                     </div>

@@ -87,7 +87,9 @@ export async function getTokens() {
         vbuy24h_change_percent,
         vsell24h_change_percent,
         unique_wallet24h_change_percent,
-        trade24h_change_percent
+        trade24h_change_percent,
+        is_kol,
+        is_defi
       FROM tokens 
       ORDER BY name ASC
     `);
