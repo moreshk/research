@@ -2,318 +2,27 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import * as Tooltip from '@radix-ui/react-tooltip';
-import { InfoCircledIcon, CheckIcon, CopyIcon, ChevronDownIcon, ChevronRightIcon, GitHubLogoIcon, TwitterLogoIcon, ExternalLinkIcon, ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
+import { InfoCircledIcon, GitHubLogoIcon, TwitterLogoIcon, ExternalLinkIcon, ChevronDownIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { TypeTooltip } from '@/components/table/TypeTooltip';
+import { MomentumTooltip } from '@/components/table/MomentumTooltip';
+import { ScoreTooltip } from '@/components/table/ScoreTooltip';
+import { CopyableAddress } from '@/components/table/CopyableAddress';
+import { ChainSelect } from '@/components/table/ChainSelect';
+import { SortableHeader } from '@/components/table/SortableHeader';
+import { Token, SortField, SortDirection, FilterType } from '@/types/token';
+import { formatPrice, formatPriceChange } from '@/utils/format';
 
-type Token = {
-  id: number;
-  name: string;
-  symbol: string;
-  description: string;
-  contract_address: string;
-  image_url: string;
+interface Filters {
+  type: FilterType;
   chain: string;
   ecosystem: string;
-  is_agent: boolean;
-  is_framework: boolean;
-  is_application: boolean;
-  is_meme: boolean;
-  price: number;
-  price_change_24h: number;
-  price_updated_at: string;
-  project_desc: string | null;
-  github_url: string | null;
-  github_analysis: string | null;
-  twitter_url: string | null;
-  dexscreener_url: string | null;
-  market_cap: number;
-  breakout_score: number;
-  price_score: number;
-  volume_score: number;
-  buy_sell_score: number;
-  wallet_score: number;
-  trade_score: number;
-};
-
-interface SortableHeaderProps {
-  field: SortField;
-  label: string | React.ReactNode;
-  sortConfig: {
-    field: SortField;
-    direction: SortDirection;
-  };
-  onSort: (field: SortField) => void;
 }
-
-const SortableHeader: React.FC<SortableHeaderProps> = ({ 
-  field, 
-  label, 
-  sortConfig, 
-  onSort 
-}) => {
-  return (
-    <th 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:text-white"
-      onClick={() => onSort(field)}
-    >
-      <div className="flex items-center gap-1">
-        {label}
-        <span className="inline-flex flex-col justify-center h-4">
-          {sortConfig.field === field ? (
-            sortConfig.direction === 'asc' ? (
-              <ArrowUpIcon className="h-3 w-3" />
-            ) : (
-              <ArrowDownIcon className="h-3 w-3" />
-            )
-          ) : (
-            <div className="opacity-0 group-hover:opacity-50">
-              <ArrowUpIcon className="h-3 w-3" />
-            </div>
-          )}
-        </span>
-      </div>
-    </th>
-  );
-};
-
-const TypeTooltip = () => (
-  <Tooltip.Provider>
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        <button className="inline-flex items-center ml-1">
-          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
-          sideOffset={5}
-        >
-          <p className="mb-2">
-            <strong>Agents:</strong> AI powered digital entities that have a degree of autonomy in the tasks they perform. 
-            They can respond on various platforms such as twitter, discord and other social media platforms and take on 
-            personas as defined by their creators. They can also perform other tasks such as trading etc. Eg: ELIZA.
-          </p>
-          <p className="mb-2">
-            <strong>Agent Frameworks:</strong> Development toolkits that make development of these agents easier. 
-            eg: Virtuals, Ai16z, Zerebro etc.
-          </p>
-          <p className="mb-2">
-            <strong>Applications:</strong> Something which can be used to either receive information or perform some 
-            action either by humans or agents. eg: cookie, dexscreener etc.
-          </p>
-          <p>
-            <strong>Meme:</strong> A pure meme is a content only play which may or may not be powered by AI. 
-            for eg: FARTCOIN.
-          </p>
-          <Tooltip.Arrow className="fill-gray-800" />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-);
-
-const MomentumTooltip = () => (
-  <Tooltip.Provider>
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        <button className="inline-flex items-center ml-1">
-          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
-          sideOffset={5}
-        >
-          <p>
-            We determine momentum by accounting for a number of parameters such as price trends, 
-            volume trends, number of buyers vs sellers and so on
-          </p>
-          <Tooltip.Arrow className="fill-gray-800" />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-);
-
-const CopyableAddress = ({ address }: { address: string }) => {
-  const [copied, setCopied] = useState(false);
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  // Format address to show only first 6 and last 4 characters
-  const formatAddress = (addr: string) => {
-    if (!addr) return '';
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  return (
-    <button
-      onClick={copyToClipboard}
-      className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-800 transition-colors"
-      title="Click to copy address"
-    >
-      <span className="font-mono text-sm">{formatAddress(address)}</span>
-      {copied ? (
-        <CheckIcon className="h-4 w-4 text-green-500" />
-      ) : (
-        <CopyIcon className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-      )}
-    </button>
-  );
-};
-
-const ChainSelect = ({ 
-  value, 
-  onChange, 
-  chains 
-}: { 
-  value: string, 
-  onChange: (value: string) => void, 
-  chains: string[] 
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        className="bg-gray-800 text-white rounded px-3 py-2 w-40 flex items-center justify-between"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {value === 'all' ? (
-          <span>All Chains</span>
-        ) : (
-          <div className="flex items-center gap-2">
-            <img
-              src={`/${value.toLowerCase()}.png`}
-              alt={value}
-              className="h-4 w-4"
-            />
-            <span>{value}</span>
-          </div>
-        )}
-        <span className="ml-2">▼</span>
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg">
-          <div 
-            className="p-2 hover:bg-gray-700 cursor-pointer"
-            onClick={() => {
-              onChange('all');
-              setIsOpen(false);
-            }}
-          >
-            All Chains
-          </div>
-          {chains.map(chain => (
-            <div
-              key={chain}
-              className="p-2 hover:bg-gray-700 cursor-pointer flex items-center gap-2"
-              onClick={() => {
-                onChange(chain);
-                setIsOpen(false);
-              }}
-            >
-              <img
-                src={`/${chain.toLowerCase()}.png`}
-                alt={chain}
-                className="h-4 w-4"
-              />
-              <span>{chain}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Add this helper function for formatting large numbers
-function formatLargeNumber(num: number): string {
-  if (num >= 1e9) {
-    return `$${(num / 1e9).toFixed(1)}B`;
-  } else if (num >= 1e6) {
-    return `$${(num / 1e6).toFixed(1)}M`;
-  } else if (num >= 1e3) {
-    return `$${(num / 1e3).toFixed(1)}K`;
-  }
-  return `$${num.toFixed(0)}`;
-}
-
-// Update the formatPrice function
-function formatPrice(price: number | string | null | undefined, isMarketCap: boolean = false): string {
-  if (price === null || price === undefined) return 'N/A';
-  
-  // Convert to number if it's a string
-  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-  
-  // Check if it's a valid number
-  if (isNaN(numericPrice)) return 'N/A';
-  
-  // Handle market cap differently
-  if (isMarketCap) {
-    return formatLargeNumber(numericPrice);
-  }
-  
-  return numericPrice < 0.01 
-    ? `$${numericPrice.toFixed(8)}` 
-    : `$${numericPrice.toFixed(2)}`;
-}
-
-// Add this helper function for formatting price changes
-function formatPriceChange(change: number | string | null | undefined): string {
-  if (change === null || change === undefined) return 'N/A';
-  
-  // Convert to number if it's a string
-  const numericChange = typeof change === 'string' ? parseFloat(change) : change;
-  
-  // Check if it's a valid number
-  if (isNaN(numericChange)) return 'N/A';
-  
-  return `${numericChange > 0 ? '+' : ''}${numericChange.toFixed(2)}%`;
-}
-
-// Add new tooltip component for scores
-const ScoreTooltip = ({ content }: { content: string }) => (
-  <Tooltip.Provider>
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        <button className="inline-flex items-center ml-1">
-          <InfoCircledIcon className="h-4 w-4 text-gray-400" />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          className="max-w-md rounded-md bg-gray-800 px-4 py-3 text-sm text-gray-100 shadow-lg"
-          sideOffset={5}
-        >
-          <p>{content}</p>
-          <Tooltip.Arrow className="fill-gray-800" />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-);
-
-type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
-type SortDirection = 'asc' | 'desc';
 
 export default function Home() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     type: 'all',
     chain: 'all',
     ecosystem: 'all'
@@ -330,21 +39,18 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // First, try to update prices (will use cache if available)
         const priceResponse = await fetch('/api/updatePrices');
         const priceData = await priceResponse.json();
         
-        // Then fetch the tokens (which will include the latest prices)
         const tokenResponse = await fetch('/api/tokens');
         if (!tokenResponse.ok) {
           throw new Error('Failed to fetch tokens');
         }
         const data = await tokenResponse.json();
 
-        // Check if priceData and priceData.data exist before using find
         if (priceData && priceData.success && Array.isArray(priceData.data)) {
           setTokens(
-            data.map((d: any) => {
+            data.map((d: Token) => {
               const details = priceData.data.find(
                 (a: any) => a.contract_address === d.contract_address
               );
@@ -353,7 +59,6 @@ export default function Home() {
             })
           );
         } else {
-          // If no price data, just set the tokens as is
           setTokens(data);
         }
       } catch (err) {
@@ -398,10 +103,9 @@ export default function Home() {
 
     if (sortConfig.field) {
       return [...filtered].sort((a, b) => {
-        const aValue = a[sortConfig.field!];
-        const bValue = b[sortConfig.field!];
+        const aValue = sortConfig.field ? a[sortConfig.field] : null;
+        const bValue = sortConfig.field ? b[sortConfig.field] : null;
         
-        // Move null/undefined values to the end
         if (aValue === null || aValue === undefined) return 1;
         if (bValue === null || bValue === undefined) return -1;
         
@@ -425,18 +129,12 @@ export default function Home() {
     });
   };
 
-  const getBreakoutScoreColor = (score: number) => {
-    if (score === 0) return 'gray';
-    return score > 0 ? 'green' : 'red';
+  const handleFilterChange = (type: FilterType) => {
+    setFilters(prev => ({ ...prev, type }));
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="p-8">
@@ -446,7 +144,7 @@ export default function Home() {
         <select
           className="bg-gray-800 text-white rounded px-3 py-2"
           value={filters.type}
-          onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+          onChange={(e) => handleFilterChange(e.target.value as FilterType)}
         >
           <option value="all">All Types</option>
           <option value="agent">Agent</option>
@@ -503,15 +201,17 @@ export default function Home() {
                 label={
                   <div className="flex items-center">
                     Momentum
-                    <MomentumTooltip />
+                    <MomentumTooltip score={null} showScore={false} />
                   </div>
                 }
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                Type
-                <TypeTooltip />
+                <div className="flex items-center gap-1">
+                  Type
+                  <TypeTooltip showIcon={true} />
+                </div>
               </th>
             </tr>
           </thead>
@@ -582,16 +282,7 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {token.breakout_score !== null ? (
-                        <span className={`font-medium ${
-                          token.breakout_score === 0 ? 'text-gray-400' :
-                          token.breakout_score > 0 ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {token.breakout_score > 0 ? `+${token.breakout_score}` : token.breakout_score}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">N/A</span>
-                      )}
+                      <MomentumTooltip score={token.breakout_score} />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -625,51 +316,31 @@ export default function Home() {
                       <div className="space-y-4">
                         {/* Breakout Score Components */}
                         <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">
-                          <div className="text-center">
-                            <div className="text-sm text-gray-400 flex items-center justify-center">
-                              Price Score
-                              <ScoreTooltip content="Weighted price change for the last 24h" />
-                            </div>
-                            <div className="text-lg font-medium text-white">
-                              {token.price_score !== null ? token.price_score.toFixed(1) : 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-400 flex items-center justify-center">
-                              Volume Score
-                              <ScoreTooltip content="Weighted volume change for the last 24h" />
-                            </div>
-                            <div className="text-lg font-medium text-white">
-                              {token.volume_score !== null ? token.volume_score.toFixed(1) : 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-400 flex items-center justify-center">
-                              Buy/Sell Score
-                              <ScoreTooltip content="Weighted difference between buyers and sellers for the last 24h" />
-                            </div>
-                            <div className="text-lg font-medium text-white">
-                              {token.buy_sell_score !== null ? token.buy_sell_score.toFixed(1) : 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-400 flex items-center justify-center">
-                              Holder Score
-                              <ScoreTooltip content="Weighted unique wallet count for the last 24h" />
-                            </div>
-                            <div className="text-lg font-medium text-white">
-                              {token.wallet_score !== null ? token.wallet_score.toFixed(1) : 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-400 flex items-center justify-center">
-                              Trade Score
-                              <ScoreTooltip content="Weighted trade counts for the last 24h" />
-                            </div>
-                            <div className="text-lg font-medium text-white">
-                              {token.trade_score !== null ? token.trade_score.toFixed(1) : 'N/A'}
-                            </div>
-                          </div>
+                          <ScoreTooltip
+                            label="Price Score"
+                            score={token.price_score}
+                            tooltipContent="Weighted price change for the last 24h"
+                          />
+                          <ScoreTooltip
+                            label="Volume Score"
+                            score={token.volume_score}
+                            tooltipContent="Weighted volume change for the last 24h"
+                          />
+                          <ScoreTooltip
+                            label="Buy/Sell Score"
+                            score={token.buy_sell_score}
+                            tooltipContent="Weighted difference between buyers and sellers for the last 24h"
+                          />
+                          <ScoreTooltip
+                            label="Holder Score"
+                            score={token.wallet_score}
+                            tooltipContent="Weighted unique wallet count for the last 24h"
+                          />
+                          <ScoreTooltip
+                            label="Trade Score"
+                            score={token.trade_score}
+                            tooltipContent="Weighted trade counts for the last 24h"
+                          />
                         </div>
 
                         {/* Existing expanded content */}

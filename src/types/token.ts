@@ -1,0 +1,32 @@
+export type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
+export type SortDirection = 'asc' | 'desc';
+export type FilterType = 'all' | 'agent' | 'framework' | 'application' | 'meme';
+
+export interface Token {
+  id: number;
+  name: string;
+  symbol: string;
+  type?: string;
+  contract_address: string;
+  chain: string;
+  ecosystem: string;
+  price: number;
+  price_change_24h: number;
+  market_cap: number;
+  breakout_score: number;
+  is_agent: boolean;
+  is_framework: boolean;
+  is_application: boolean;
+  is_meme: boolean;
+  image_url?: string;
+  project_desc?: string;
+  github_url?: string;
+  twitter_url?: string;
+  dexscreener_url?: string;
+  price_score: number | null;
+  volume_score: number | null;
+  buy_sell_score: number | null;
+  wallet_score: number | null;
+  trade_score: number | null;
+  [key: string]: any;
+} 
