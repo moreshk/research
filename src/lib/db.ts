@@ -192,13 +192,15 @@ export async function updateTokenPrices(tokenUpdates: {
   vbuy24h_change_percent: number,
   vsell24h_change_percent: number,
   unique_wallet24h_change_percent: number,
-  trade24h_change_percent: number
+  trade24h_change_percent: number,
+  name: string,
+  symbol: string,
+  description: string | null
 }[]) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     console.log(`Updating ${tokenUpdates.length} tokens`);
-    
     for (const update of tokenUpdates) {
       const chainToStore = update.id === 3 ? 'ethereum' : update.chain;
       
@@ -237,8 +239,11 @@ export async function updateTokenPrices(tokenUpdates: {
           vbuy24h_change_percent = $31,
           vsell24h_change_percent = $32,
           unique_wallet24h_change_percent = $33,
-          trade24h_change_percent = $34
-        WHERE id = $35`,
+          trade24h_change_percent = $34,
+          name = $35,
+          symbol = $36,
+          description = $37
+        WHERE id = $38`,
         [
           update.price,
           update.market_cap,
@@ -274,6 +279,9 @@ export async function updateTokenPrices(tokenUpdates: {
           update.vsell24h_change_percent,
           update.unique_wallet24h_change_percent,
           update.trade24h_change_percent,
+          update.name,
+          update.symbol,
+          update.description,
           update.id
         ]
       );

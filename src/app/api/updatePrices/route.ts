@@ -113,6 +113,9 @@ export async function GET(request: NextRequest) {
             vsell24h_change_percent: overviewData.data.vSell24hChangePercent,
             unique_wallet24h_change_percent: overviewData.data.uniqueWallet24hChangePercent,
             trade24h_change_percent: overviewData.data.trade24hChangePercent,
+            name: overviewData.data.name,
+            symbol: overviewData.data.symbol,
+            description: overviewData.data.extensions?.description || null,
           };
         } else {
           console.error(
