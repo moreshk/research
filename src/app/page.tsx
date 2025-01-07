@@ -13,6 +13,7 @@ import { Token, SortField, SortDirection, FilterType } from '@/types/token';
 import { formatPrice, formatPriceChange } from '@/utils/format';
 import Link from 'next/link';
 import { calculateCyberIndex } from '@/utils/calculateCyberIndex';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 interface Filters {
   type: FilterType;
@@ -250,7 +251,22 @@ export default function Home() {
                 label={
                   <div className="flex items-center">
                     Github Score
-                    <InfoCircledIcon className="ml-1 h-4 w-4 text-gray-400" />
+                    <Tooltip.Provider>
+                      <Tooltip.Root>
+                        <Tooltip.Trigger asChild>
+                          <InfoCircledIcon className="ml-1 h-4 w-4 text-gray-400 cursor-help" />
+                        </Tooltip.Trigger>
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            className="bg-gray-800 px-4 py-2 rounded-md text-sm text-white shadow-lg max-w-xs"
+                            sideOffset={5}
+                          >
+                            <p>Score based on repository activity, community engagement, and project health</p>
+                            <Tooltip.Arrow className="fill-gray-800" />
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
                   </div>
                 }
                 sortConfig={sortConfig}
@@ -325,7 +341,14 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {token.breakout_score ?? 'N/A'}
+                      <span className={`font-medium ${
+                        token.breakout_score > 0 ? 'text-green-400' : 
+                        token.breakout_score < 0 ? 'text-red-400' : 
+                        'text-gray-400'
+                      }`}>
+                        {token.breakout_score !== null ? token.breakout_score.toFixed(2) : 'N/A'}
+                      </span>
+                      <MomentumTooltip score={token.breakout_score} showScore={false} />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
