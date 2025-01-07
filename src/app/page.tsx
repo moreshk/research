@@ -11,6 +11,7 @@ import { ChainSelect } from '@/components/table/ChainSelect';
 import { SortableHeader } from '@/components/table/SortableHeader';
 import { Token, SortField, SortDirection, FilterType } from '@/types/token';
 import { formatPrice, formatPriceChange } from '@/utils/format';
+import Link from 'next/link';
 
 interface Filters {
   type: FilterType;
@@ -351,16 +352,27 @@ export default function Home() {
                         {/* Links Section */}
                         <div className="flex gap-4 pt-2">
                           {token.github_url && (
-                            <a
-                              href={token.github_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                              title="GitHub Repository"
-                            >
-                              <GitHubLogoIcon className="h-5 w-5" />
-                              <span className="text-sm">GitHub</span>
-                            </a>
+                            <>
+                              {console.log('GitHub URL:', token.github_url)}
+                              <Link
+                                href={(() => {
+                                  try {
+                                    const url = new URL(token.github_url);
+                                    const [owner, repo] = url.pathname.split('/').filter(Boolean);
+                                    if (!owner || !repo) throw new Error('Invalid GitHub URL format');
+                                    return `/repo/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                                  } catch (e) {
+                                    console.error('Invalid GitHub URL:', token.github_url);
+                                    return '#';
+                                  }
+                                })()}
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                                title="View Repository Details"
+                              >
+                                <GitHubLogoIcon className="h-5 w-5" />
+                                <span className="text-sm">GitHub</span>
+                              </Link>
+                            </>
                           )}
                           
                           {token.twitter_url && (

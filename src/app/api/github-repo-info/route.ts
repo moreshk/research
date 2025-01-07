@@ -36,65 +36,85 @@ export async function GET(request: NextRequest) {
 async function fetchAllRepoData(owner: string, repo: string, pat: string) {
   const octokit = new Octokit({ auth: pat });
 
-  const [
-    repoData,
-    issuesData,
-    pullsData,
-    contributorsData,
-    releasesData,
-    commitsData,
-    trafficData,
-    clonesData,
-    codeFrequencyData,
-    commitActivityData,
-    deploymentData
-  ] = await Promise.all([
-    octokit.repos.get({ owner, repo }),
-    octokit.issues.listForRepo({ owner, repo, state: 'all' }),
-    octokit.pulls.list({ owner, repo, state: 'all' }),
-    octokit.repos.listContributors({ owner, repo }),
-    octokit.repos.listReleases({ owner, repo }),
-    octokit.repos.listCommits({ owner, repo }),
-    octokit.repos.getViews({ owner, repo }),
-    octokit.repos.getClones({ owner, repo }),
-    octokit.repos.getCodeFrequencyStats({ owner, repo }),
-    octokit.repos.getCommitActivityStats({ owner, repo }),
-    octokit.repos.listDeployments({ owner, repo })
-  ]);
+  try {
+    // First fetch the basic public data
+    const [
+      repoData,
+      issuesData,
+      pullsData,
+      contributorsData,
+      releasesData,
+      commitsData,
+    ] = await Promise.all([
+      octokit.repos.get({ owner, repo }),
+      octokit.issues.listForRepo({ owner, repo, state: 'all' }),
+      octokit.pulls.list({ owner, repo, state: 'all' }),
+      octokit.repos.listContributors({ owner, repo }),
+      octokit.repos.listReleases({ owner, repo }),
+      octokit.repos.listCommits({ owner, repo })
+    ]);
 
-  return {
-    publicData: {
-      starsCount: repoData.data.stargazers_count,
-      forksCount: repoData.data.forks_count,
-      openIssuesCount: repoData.data.open_issues_count,
-      closedIssuesCount: issuesData.data.filter(issue => issue.state === 'closed').length,
-      openPullRequestsCount: pullsData.data.filter(pr => pr.state === 'open').length,
-      closedPullRequestsCount: pullsData.data.filter(pr => pr.state === 'closed').length,
-      contributorsCount: contributorsData.data.length,
-      releasesCount: releasesData.data.length,
-      license: repoData.data.license,
-      description: repoData.data.description,
-      topics: repoData.data.topics,
-      defaultBranch: repoData.data.default_branch,
-      primaryLanguage: repoData.data.language,
-      createdAt: repoData.data.created_at,
-      updatedAt: repoData.data.updated_at,
-      isArchived: repoData.data.archived,
-      hasWiki: repoData.data.has_wiki,
-      hasIssues: repoData.data.has_issues,
-      commitFrequency: calculateCommitFrequency(commitsData.data)
-    },
-    authenticatedData: {
-      traffic: {
-        views: trafficData.data.views,
-        clones: clonesData.data.clones
-      },
-      codeFrequency: codeFrequencyData.data,
-      commitActivity: commitActivityData.data,
-      deploymentFrequency: calculateDeploymentFrequency(deploymentData.data),
-      pullRequestReviewStats: calculatePullRequestStats(pullsData.data)
+    // Try to fetch authenticated data, but don't fail if we don't have permissions
+    let authenticatedData = {};
+    try {
+      const [
+        trafficData,
+        clonesData,
+        codeFrequencyData,
+        commitActivityData,
+        deploymentData
+      ] = await Promise.all([
+        octokit.repos.getViews({ owner, repo }).catch(() => ({ data: { views: [] } })),
+        octokit.repos.getClones({ owner, repo }).catch(() => ({ data: { clones: [] } })),
+        octokit.repos.getCodeFrequencyStats({ owner, repo }).catch(() => ({ data: [] })),
+        octokit.repos.getCommitActivityStats({ owner, repo }).catch(() => ({ data: [] })),
+        octokit.repos.listDeployments({ owner, repo }).catch(() => ({ data: [] }))
+      ]);
+
+      authenticatedData = {
+        traffic: {
+          views: trafficData.data.views,
+          clones: clonesData.data.clones
+        },
+        codeFrequency: codeFrequencyData.data,
+        commitActivity: commitActivityData.data,
+        deploymentFrequency: calculateDeploymentFrequency(deploymentData.data),
+        pullRequestReviewStats: calculatePullRequestStats(pullsData.data)
+      };
+    } catch (error) {
+      console.warn('Failed to fetch some authenticated data:', error);
+      // Continue with just the public data
     }
-  };
+
+    return {
+      publicData: {
+        starsCount: repoData.data.stargazers_count,
+        forksCount: repoData.data.forks_count,
+        openIssuesCount: repoData.data.open_issues_count,
+        closedIssuesCount: issuesData.data.filter(issue => issue.state === 'closed').length,
+        openPullRequestsCount: pullsData.data.filter(pr => pr.state === 'open').length,
+        closedPullRequestsCount: pullsData.data.filter(pr => pr.state === 'closed').length,
+        contributorsCount: contributorsData.data.length,
+        releasesCount: releasesData.data.length,
+        license: repoData.data.license,
+        description: repoData.data.description,
+        topics: repoData.data.topics,
+        defaultBranch: repoData.data.default_branch,
+        primaryLanguage: repoData.data.language,
+        createdAt: repoData.data.created_at,
+        updatedAt: repoData.data.updated_at,
+        isArchived: repoData.data.archived,
+        hasWiki: repoData.data.has_wiki,
+        hasIssues: repoData.data.has_issues,
+        commitFrequency: calculateCommitFrequency(commitsData.data)
+      },
+      authenticatedData
+    };
+  } catch (error) {
+    console.error('Error fetching repository data:', error);
+    // If we fail to fetch with PAT, try falling back to public data
+    return { publicData: await fetchPublicRepoData(owner, repo) };
+  }
 }
 
 function parseGitHubUrl(url: string): { owner: string | null; repo: string | null } {
