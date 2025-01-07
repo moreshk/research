@@ -346,9 +346,8 @@ export default function Home() {
                         token.breakout_score < 0 ? 'text-red-400' : 
                         'text-gray-400'
                       }`}>
-                        {token.breakout_score !== null ? token.breakout_score.toFixed(2) : 'N/A'}
+                        {token.breakout_score !== null ? Math.round(token.breakout_score) : 'N/A'}
                       </span>
-                      <MomentumTooltip score={token.breakout_score} showScore={false} />
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
