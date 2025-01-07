@@ -183,27 +183,34 @@ export default function RepoPage() {
         </div>
 
         {/* Authenticated Data (if available) */}
-        {authenticatedData && (
-          <>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">Traffic (Last 14 days)</h2>
-              <div className="space-y-2">
-                <div>Total Views: {authenticatedData.traffic.views.reduce((sum, view) => sum + view.count, 0)}</div>
-                <div>Unique Views: {authenticatedData.traffic.views.reduce((sum, view) => sum + view.uniques, 0)}</div>
-                <div>Total Clones: {authenticatedData.traffic.clones.reduce((sum, clone) => sum + clone.count, 0)}</div>
-                <div>Unique Clones: {authenticatedData.traffic.clones.reduce((sum, clone) => sum + clone.uniques, 0)}</div>
-              </div>
+        {authenticatedData && authenticatedData.traffic && (
+          authenticatedData.traffic.views.length > 0 || authenticatedData.traffic.clones.length > 0
+        ) && (
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <h2 className="text-xl font-semibold mb-4">Traffic (Last 14 days)</h2>
+            <div className="space-y-2">
+              <div>Total Views: {authenticatedData.traffic.views.reduce((sum, view) => sum + view.count, 0)}</div>
+              <div>Unique Views: {authenticatedData.traffic.views.reduce((sum, view) => sum + view.uniques, 0)}</div>
+              <div>Total Clones: {authenticatedData.traffic.clones.reduce((sum, clone) => sum + clone.count, 0)}</div>
+              <div>Unique Clones: {authenticatedData.traffic.clones.reduce((sum, clone) => sum + clone.uniques, 0)}</div>
             </div>
+          </div>
+        )}
 
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">PR Review Stats</h2>
-              <div className="space-y-2">
-                <div>Average Time to Merge: {authenticatedData.pullRequestReviewStats.averageTimeToMerge.toFixed(1)} hours</div>
-                <div>Merge Rate: {authenticatedData.pullRequestReviewStats.mergeRate.toFixed(1)}%</div>
-                <div>Reviews per PR: {authenticatedData.pullRequestReviewStats.reviewsPerPR.toFixed(1)}</div>
-              </div>
+        {/* Only show PR Review Stats if there is meaningful data */}
+        {authenticatedData && authenticatedData.pullRequestReviewStats && (
+          authenticatedData.pullRequestReviewStats.averageTimeToMerge > 0 || 
+          authenticatedData.pullRequestReviewStats.mergeRate > 0 || 
+          authenticatedData.pullRequestReviewStats.reviewsPerPR > 0
+        ) && (
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <h2 className="text-xl font-semibold mb-4">PR Review Stats</h2>
+            <div className="space-y-2">
+              <div>Average Time to Merge: {authenticatedData.pullRequestReviewStats.averageTimeToMerge.toFixed(1)} hours</div>
+              <div>Merge Rate: {authenticatedData.pullRequestReviewStats.mergeRate.toFixed(1)}%</div>
+              <div>Reviews per PR: {authenticatedData.pullRequestReviewStats.reviewsPerPR.toFixed(1)}</div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
