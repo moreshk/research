@@ -12,6 +12,7 @@ import { SortableHeader } from '@/components/table/SortableHeader';
 import { Token, SortField, SortDirection, FilterType } from '@/types/token';
 import { formatPrice, formatPriceChange } from '@/utils/format';
 import Link from 'next/link';
+import { calculateCyberIndex } from '@/utils/calculateCyberIndex';
 
 interface Filters {
   type: FilterType;
@@ -62,6 +63,12 @@ export default function Home() {
         } else {
           setTokens(data);
         }
+        // Fetch Cyber Index for tokens with GitHub URLs
+        data.forEach((token: Token) => {
+          if (token.github_url) {
+            fetchCyberIndex(token);
+          }
+        });
       } catch (err) {
         setError('Failed to load tokens');
         console.error(err);
@@ -132,6 +139,30 @@ export default function Home() {
 
   const handleFilterChange = (type: FilterType) => {
     setFilters(prev => ({ ...prev, type }));
+  };
+
+  const fetchCyberIndex = async (token: Token) => {
+    if (!token.github_url) return;
+
+    try {
+      const url = new URL(token.github_url);
+      const [owner, repo] = url.pathname.split('/').filter(Boolean);
+      if (!owner || !repo) throw new Error('Invalid GitHub URL format');
+
+      const response = await fetch(`/api/github-repo-info?repo=${encodeURIComponent(token.github_url)}`);
+      if (!response.ok) throw new Error('Failed to fetch repository data');
+
+      const data = await response.json();
+      const cyberIndex = calculateCyberIndex(data.publicData, data.authenticatedData);
+
+      setTokens(prevTokens => 
+        prevTokens.map(t => 
+          t.id === token.id ? { ...t, cyberIndex } : t
+        )
+      );
+    } catch (error) {
+      console.error('Error fetching Cyber Index:', error);
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -214,6 +245,17 @@ export default function Home() {
                   <TypeTooltip showIcon={true} />
                 </div>
               </th>
+              <SortableHeader
+                field="cyberIndex"
+                label={
+                  <div className="flex items-center">
+                    Github Score
+                    <InfoCircledIcon className="ml-1 h-4 w-4 text-gray-400" />
+                  </div>
+                }
+                sortConfig={sortConfig}
+                onSort={handleSort}
+              />
             </tr>
           </thead>
           <tbody className="bg-gray-900 divide-y divide-gray-700">
@@ -310,10 +352,19 @@ export default function Home() {
                       )}
                     </div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {token.github_url ? (
+                        token.cyberIndex !== undefined && token.cyberIndex !== null ? 
+                          token.cyberIndex 
+                          : 'Loading...'
+                      ) : 'N/A'}
+                    </div>
+                  </td>
                 </tr>
                 {expandedRows.has(token.id) && (
                   <tr className="bg-gray-800">
-                    <td colSpan={7} className="px-6 py-4">
+                    <td colSpan={9} className="px-6 py-4">
                       <div className="space-y-4">
                         {/* Breakout Score Components */}
                         <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">

@@ -1,7 +1,13 @@
 import { ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
 import React from 'react';
 
-export type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
+export type SortField = 
+  | 'price' 
+  | 'price_change_24h' 
+  | 'market_cap' 
+  | 'breakout_score' 
+  | 'cyberIndex' 
+  | null;
 export type SortDirection = 'asc' | 'desc';
 
 interface SortableHeaderProps {

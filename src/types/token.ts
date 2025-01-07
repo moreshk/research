@@ -1,4 +1,4 @@
-export type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | null;
+export type SortField = 'price' | 'price_change_24h' | 'market_cap' | 'breakout_score' | 'cyberIndex' | null;
 export type SortDirection = 'asc' | 'desc';
 export type FilterType = 'all' | 'agent' | 'framework' | 'application' | 'meme';
 
