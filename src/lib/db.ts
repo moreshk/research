@@ -288,3 +288,92 @@ export async function updateTokenPrices(tokenUpdates: {
     client.release();
   }
 }
+
+// Add this new interface for the token input
+interface TokenInput {
+  contract_address: string;
+  chain: string;
+  name?: string;
+  symbol?: string;
+  description?: string;
+  is_agent?: boolean;
+  is_framework?: boolean;
+  is_application?: boolean;
+  is_meme?: boolean;
+  is_kol?: boolean;
+  is_defi?: boolean;
+  project_desc?: string;
+  github_url?: string;
+  github_analysis?: string;
+  twitter_url?: string;
+  dexscreener_url?: string;
+  image_url?: string;
+  framework?: string;
+}
+
+export async function insertToken(tokenInput: TokenInput) {
+  const client = await pool.connect();
+  try {
+    // First check if token exists
+    const existingToken = await client.query(
+      'SELECT id FROM tokens WHERE LOWER(contract_address) = LOWER($1) AND LOWER(chain) = LOWER($2)',
+      [tokenInput.contract_address, tokenInput.chain]
+    );
+
+    if (existingToken.rows.length > 0) {
+      throw new Error('Token already exists for this contract address and chain combination');
+    }
+
+    // Proceed with insert if token doesn't exist
+    const result = await client.query(
+      `INSERT INTO tokens (
+        contract_address,
+        chain,
+        name,
+        symbol,
+        description,
+        is_agent,
+        is_framework,
+        is_application,
+        is_meme,
+        is_kol,
+        is_defi,
+        project_desc,
+        github_url,
+        github_analysis,
+        twitter_url,
+        dexscreener_url,
+        image_url,
+        framework
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING id`,
+      [
+        tokenInput.contract_address,
+        tokenInput.chain,
+        tokenInput.name || '',
+        tokenInput.symbol || '',
+        tokenInput.description || null,
+        tokenInput.is_agent || false,
+        tokenInput.is_framework || false,
+        tokenInput.is_application || false,
+        tokenInput.is_meme || false,
+        tokenInput.is_kol || false,
+        tokenInput.is_defi || false,
+        tokenInput.project_desc || null,
+        tokenInput.github_url || null,
+        tokenInput.github_analysis || null,
+        tokenInput.twitter_url || null,
+        tokenInput.dexscreener_url || null,
+        tokenInput.image_url || null,
+        tokenInput.framework || null
+      ]
+    );
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error inserting token:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
