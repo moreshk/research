@@ -1,32 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Octokit } from '@octokit/rest';
-
-// Get PAT from environment variable
-const GITHUB_PAT = process.env.GITHUB_PAT;
+import redis from '@/lib/redis';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const repoUrl = searchParams.get('repo');
 
   if (!repoUrl) {
-    return NextResponse.json({ error: 'Repository URL is required' }, { status: 400 });
+    return NextResponse.json({ error: 'No repository URL provided' }, { status: 400 });
   }
 
   const { owner, repo } = parseGitHubUrl(repoUrl);
+
   if (!owner || !repo) {
-    return NextResponse.json({ error: 'Invalid GitHub repository URL' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid GitHub URL' }, { status: 400 });
+  }
+
+  const cacheKey = `github_repo_${owner}_${repo}`;
+  const cachedData = await redis.get(cacheKey);
+
+  if (cachedData) {
+    return NextResponse.json(JSON.parse(cachedData));
+  }
+
+  const pat = process.env.GITHUB_PAT;
+  if (!pat) {
+    return NextResponse.json({ error: 'GitHub PAT not configured' }, { status: 500 });
   }
 
   try {
-    // If PAT exists, fetch both public and authenticated data
-    // If not, fetch only public data
-    if (GITHUB_PAT) {
-      const data = await fetchAllRepoData(owner, repo, GITHUB_PAT);
-      return NextResponse.json(data);
-    } else {
-      const publicData = await fetchPublicRepoData(owner, repo);
-      return NextResponse.json({ publicData });
-    }
+    const data = await fetchAllRepoData(owner, repo, pat);
+    await redis.set(cacheKey, JSON.stringify(data), 'EX', 24 * 60 * 60); // Cache for 24 hours
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching repository data:', error);
     return NextResponse.json({ error: 'Failed to fetch repository data' }, { status: 500 });
