@@ -352,27 +352,24 @@ export default function Home() {
                         {/* Links Section */}
                         <div className="flex gap-4 pt-2">
                           {token.github_url && (
-                            <>
-                              {console.log('GitHub URL:', token.github_url)}
-                              <Link
-                                href={(() => {
-                                  try {
-                                    const url = new URL(token.github_url);
-                                    const [owner, repo] = url.pathname.split('/').filter(Boolean);
-                                    if (!owner || !repo) throw new Error('Invalid GitHub URL format');
-                                    return `/repo/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
-                                  } catch (e) {
-                                    console.error('Invalid GitHub URL:', token.github_url);
-                                    return '#';
-                                  }
-                                })()}
-                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                                title="View Repository Details"
-                              >
-                                <GitHubLogoIcon className="h-5 w-5" />
-                                <span className="text-sm">GitHub</span>
-                              </Link>
-                            </>
+                            <Link
+                              href={(() => {
+                                try {
+                                  const url = new URL(token.github_url);
+                                  const [owner, repo] = url.pathname.split('/').filter(Boolean);
+                                  if (!owner || !repo) throw new Error('Invalid GitHub URL format');
+                                  return `/repo/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                                } catch (e) {
+                                  console.error('Invalid GitHub URL:', token.github_url);
+                                  return '#';
+                                }
+                              })()}
+                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                              title="View Repository Details"
+                            >
+                              <GitHubLogoIcon className="h-5 w-5" />
+                              <span className="text-sm">GitHub</span>
+                            </Link>
                           )}
                           
                           {token.twitter_url && (
