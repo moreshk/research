@@ -283,7 +283,7 @@ export default function Home() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <MomentumTooltip score={token.breakout_score} />
+                      {token.breakout_score ?? 'N/A'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
