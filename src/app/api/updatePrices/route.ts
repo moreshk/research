@@ -1,9 +1,8 @@
 import { getTokens, updateTokenPrices } from "@/lib/db";
 import redis from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
-import { Token } from '@/types/token';
 
-const CACHE_KEY = "token_prices";
+const CACHE_KEY = "token_prices1";
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
 const RATE_LIMIT = 14; // maximum requests per second
 const BATCH_DELAY = 1000; // 1 second delay between batches
@@ -58,20 +57,18 @@ export async function GET(request: NextRequest) {
           message: "Prices retrieved from cache",
           cached: true,
           data: parsedData,
-          timestamp: Date.now()
         });
       }
     }
 
-    // If no cache or cache is empty, fetch fresh data
-    const tokensResponse = await getTokens();
-    const tokens = tokensResponse.tokens;
+    // If no cache, fetch fresh data
+    const tokens = await getTokens();
 
-    // Process tokens in batches with rate limiting
+    // Process tokens in batches
     const updates: any[] = [];
     for (let i = 0; i < tokens.length; i += RATE_LIMIT) {
       const batch = tokens.slice(i, i + RATE_LIMIT);
-      const batchPromises = batch.map(async (token: Token) => {
+      const batchPromises = batch.map(async (token) => {
         const overviewData = await fetchTokenOverview(
           token.contract_address,
           token.chain,
@@ -120,14 +117,18 @@ export async function GET(request: NextRequest) {
             symbol: overviewData.data.symbol,
             description: overviewData.data.extensions?.description || null,
           };
+        } else {
+          console.error(
+            `Failed to fetch data for token ${token.name} (${token.symbol}) on chain ${token.chain}.`
+          );
+          return null;
         }
-        return null;
       });
 
       const batchResults = await Promise.all(batchPromises);
-      updates.push(...batchResults.filter((update): update is NonNullable<typeof update> => update !== null));
+      updates.push(...batchResults.filter((update) => update !== null));
 
-      // Add delay between batches to respect rate limits
+      // If this isn't the last batch, add delay before the next batch
       if (i + RATE_LIMIT < tokens.length) {
         await delay(BATCH_DELAY);
       }
@@ -139,24 +140,17 @@ export async function GET(request: NextRequest) {
 
       // Cache the updated data
       await redis.setex(CACHE_KEY, CACHE_EXPIRY, JSON.stringify(updates));
-
-      return NextResponse.json({
-        success: true,
-        message: "Prices updated successfully",
-        cached: false,
-        data: updates,
-        timestamp: Date.now()
-      });
     }
 
     return NextResponse.json({
-      success: false,
-      message: "No valid updates available",
+      success: true,
+      message:
+        updates.length > 0
+          ? "Prices updated successfully"
+          : "No valid updates available",
       cached: false,
-      data: [],
-      timestamp: Date.now()
+      data: updates,
     });
-
   } catch (error) {
     console.error("Error updating prices:", error);
     return NextResponse.json(

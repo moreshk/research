@@ -1,10 +1,9 @@
 import { getTokens, insertToken } from '@/lib/db';
 import redis from '@/lib/redis';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { isAddress } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { getAccount } from '@solana/spl-token';
-import { Token, TokensResponse } from '@/types/token';
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
 
@@ -47,13 +46,9 @@ function isValidContractAddress(address: string, chain: Chain): boolean {
 
 const CACHE_KEY = 'token_prices';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-
-    const { tokens, totalCount } = await getTokens(page, limit);
+    const tokens = await getTokens();
     
     // Try to get cached price data
     const cachedPrices = await redis.get(CACHE_KEY);
@@ -72,14 +67,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      tokens,
-      totalCount,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount / limit),
-      cached: !!cachedPrices,
-      timestamp: Date.now()
-    });
+    return NextResponse.json(tokens);
   } catch (error) {
     console.error('Error fetching tokens:', error);
     return NextResponse.json({ error: 'Failed to fetch tokens' }, { status: 500 });
