@@ -2,6 +2,19 @@
 
 import React, { useState } from 'react';
 import { VALID_CHAINS } from '@/lib/constants';
+import { 
+  getAssociatedTokenAddress, 
+  createTransferInstruction,
+  createAssociatedTokenAccountInstruction,
+  ASSOCIATED_TOKEN_PROGRAM_ID 
+} from '@solana/spl-token';
+import { 
+  ComputeBudgetProgram,
+  Transaction, 
+  PublicKey,
+  Connection 
+} from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 const PRESET_ECOSYSTEMS = [
   'Solana Agent Kit',
@@ -20,7 +33,11 @@ const PRESET_ECOSYSTEMS = [
   'Top Hat'
 ];
 
+const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${process.env.NEXT_PUBLIC_HELIUS_API_KEY}`;
+
 const AddTokenForm: React.FC = () => {
+  const { publicKey, signTransaction } = useWallet();
   const [formData, setFormData] = useState({
     contract_address: '',
     chain: '',
@@ -55,21 +72,90 @@ const AddTokenForm: React.FC = () => {
     setError(null);
     setSuccess(false);
 
+    if (!publicKey || !signTransaction) {
+      setError('Please connect your wallet using the button in the top menu bar');
+      return;
+    }
+
     try {
+      const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+      const fromPubkey = publicKey;
+      const toPubkey = new PublicKey(process.env.NEXT_PUBLIC_FEE_RECIPIENT_ADDRESS!);
+      const tokenMintPubkey = new PublicKey(process.env.NEXT_PUBLIC_FEE_TOKEN_MINT_ADDRESS!);
+
+      const transaction = new Transaction();
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 400000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 })
+      );
+
+      const fromTokenAccount = await getAssociatedTokenAddress(
+        tokenMintPubkey,
+        fromPubkey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      
+      const toTokenAccount = await getAssociatedTokenAddress(
+        tokenMintPubkey,
+        toPubkey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
+      
+      if (!toTokenAccountInfo) {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            fromPubkey,
+            toTokenAccount,
+            toPubkey,
+            tokenMintPubkey,
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      }
+
+      const feeAmount = 1000 * 10**9; // 1000 tokens, adjust as needed
+
+      transaction.add(
+        createTransferInstruction(
+          fromTokenAccount,
+          toTokenAccount,
+          fromPubkey,
+          feeAmount,
+          [],
+          TOKEN_2022_PROGRAM_ID
+        )
+      );
+
+      const { blockhash } = await connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = fromPubkey;
+
+      const signedTransaction = await signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+      await connection.confirmTransaction(signature, 'confirmed');
+
       const response = await fetch('/api/tokens', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          transactionSignature: signature,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 409) {
-          throw new Error('This token already exists in the database');
-        }
         throw new Error(data.error || 'Failed to add token');
       }
 

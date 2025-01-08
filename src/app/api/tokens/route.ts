@@ -2,6 +2,12 @@ import { getTokens, insertToken } from '@/lib/db';
 import redis from '@/lib/redis';
 import { NextResponse } from 'next/server';
 import { isAddress } from 'ethers';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { getAccount } from '@solana/spl-token';
+
+const HELIUS_API_KEY = process.env.HELIUS_API_KEY;
+
+const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 
 const VALID_CHAINS = [
   'solana',
@@ -72,30 +78,47 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Validate required fields exist
-    if (!body.contract_address || !body.chain) {
+    // Validate required fields
+    if (!body.contract_address || !body.chain || !body.transactionSignature) {
       return NextResponse.json(
-        { error: 'Contract address and chain are required' },
+        { error: 'Contract address, chain, and transaction signature are required' },
         { status: 400 }
       );
     }
 
-    // Validate chain
-    if (!isValidChain(body.chain)) {
+    // Verify the transaction
+    const connection = new Connection(HELIUS_RPC_URL, 'confirmed');
+    const transactionStatus = await connection.getSignatureStatus(body.transactionSignature);
+    
+    if (!transactionStatus.value || transactionStatus.value.err) {
       return NextResponse.json(
-        { error: `Invalid chain. Must be one of: ${VALID_CHAINS.join(', ')}` },
+        { error: 'Invalid or failed transaction' },
         { status: 400 }
       );
     }
 
-    // Validate contract address format
-    if (!isValidContractAddress(body.contract_address, body.chain.toLowerCase() as Chain)) {
+    // Fetch and verify the transaction details
+    const transaction = await connection.getTransaction(body.transactionSignature);
+    if (!transaction) {
       return NextResponse.json(
-        { error: 'Invalid contract address format for the specified chain' },
+        { error: 'Transaction not found' },
         { status: 400 }
       );
     }
 
+    // Verify the transaction details (recipient, amount, token)
+    const expectedRecipient = new PublicKey(process.env.FEE_RECIPIENT_ADDRESS!);
+    const expectedTokenMint = new PublicKey(process.env.FEE_TOKEN_MINT_ADDRESS!);
+    const expectedAmount = 1000 * 10**9; // 1000 tokens, adjust as needed
+
+    // Add logic to verify the transaction details
+    // This part depends on how you structure your transaction and may require additional checks
+    // You'll need to parse the transaction instructions and verify:
+    // 1. The recipient matches the expected recipient
+    // 2. The token mint matches the expected token mint
+    // 3. The amount transferred matches the expected amount
+
+    // If everything is valid, proceed with token insertion
     const newToken = await insertToken(body);
     return NextResponse.json(newToken, { status: 201 });
   } catch (error: any) {

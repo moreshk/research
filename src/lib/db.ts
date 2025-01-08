@@ -376,7 +376,6 @@ export async function insertToken(tokenInput: TokenInput) {
         tokenInput.framework || null
       ]
     );
-
     return result.rows[0];
   } catch (error) {
     console.error('Error inserting token:', error);
