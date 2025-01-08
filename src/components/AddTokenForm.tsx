@@ -189,7 +189,7 @@ const AddTokenForm: React.FC = () => {
       }
 
       setSuccess(true);
-      setStatusMessage('Token successfully added!');
+      setStatusMessage('Token successfully added, details populated in ~1h!');
       setFormData({
         contract_address: '',
         chain: '',
