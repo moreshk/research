@@ -6,7 +6,8 @@ import {
   getAssociatedTokenAddress, 
   createTransferInstruction,
   createAssociatedTokenAccountInstruction,
-  ASSOCIATED_TOKEN_PROGRAM_ID 
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAccount 
 } from '@solana/spl-token';
 import { 
   ComputeBudgetProgram,
@@ -57,6 +58,8 @@ const AddTokenForm: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -83,13 +86,6 @@ const AddTokenForm: React.FC = () => {
       const toPubkey = new PublicKey(process.env.NEXT_PUBLIC_FEE_RECIPIENT_ADDRESS!);
       const tokenMintPubkey = new PublicKey(process.env.NEXT_PUBLIC_FEE_TOKEN_MINT_ADDRESS!);
 
-      const transaction = new Transaction();
-
-      transaction.add(
-        ComputeBudgetProgram.setComputeUnitLimit({ units: 400000 }),
-        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 })
-      );
-
       const fromTokenAccount = await getAssociatedTokenAddress(
         tokenMintPubkey,
         fromPubkey,
@@ -97,7 +93,37 @@ const AddTokenForm: React.FC = () => {
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      
+
+      try {
+        const tokenAccount = await getAccount(
+          connection,
+          fromTokenAccount,
+          'confirmed',
+          TOKEN_2022_PROGRAM_ID
+        );
+
+        const balance = Number(tokenAccount.amount);
+        const requiredAmount = 1000 * 10**9; // 1000 tokens
+
+        if (balance < requiredAmount) {
+          setError(`Insufficient CYBER balance. You need 1000 CYBER tokens to add a new token. Your current balance: ${balance / 10**9} CYBER`);
+          return;
+        }
+      } catch (error: any) {
+        if (error.name === 'TokenAccountNotFoundError') {
+          setError('You don\'t have any CYBER tokens in your wallet. Please acquire CYBER tokens before adding a new token.');
+          return;
+        }
+        throw error;
+      }
+
+      const transaction = new Transaction();
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 400000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 })
+      );
+
       const toTokenAccount = await getAssociatedTokenAddress(
         tokenMintPubkey,
         toPubkey,
@@ -138,6 +164,9 @@ const AddTokenForm: React.FC = () => {
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = fromPubkey;
 
+      setIsLoading(true);
+      setStatusMessage('Processing transaction...');
+
       const signedTransaction = await signTransaction(transaction);
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
       await connection.confirmTransaction(signature, 'confirmed');
@@ -160,6 +189,7 @@ const AddTokenForm: React.FC = () => {
       }
 
       setSuccess(true);
+      setStatusMessage('Token successfully added!');
       setFormData({
         contract_address: '',
         chain: '',
@@ -179,9 +209,14 @@ const AddTokenForm: React.FC = () => {
 
       setTimeout(() => {
         setSuccess(false);
+        setStatusMessage('');
       }, 5000);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Transaction error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+      setStatusMessage('');
     }
   };
 
@@ -190,7 +225,7 @@ const AddTokenForm: React.FC = () => {
   const sectionClasses = "space-y-6 bg-gray-900/50 p-6 rounded-lg";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Required Fields Section */}
       <div className={sectionClasses}>
         <h2 className="text-xl font-semibold text-white border-b border-gray-700 pb-2 mb-6">Required Information</h2>
@@ -330,24 +365,36 @@ const AddTokenForm: React.FC = () => {
 
       {/* Error and Success Messages */}
       {error && (
-        <div className="rounded-md bg-red-900/50 p-4 border border-red-700">
-          <p className="text-sm text-red-400 flex items-center">
-            <svg className="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {error}
-          </p>
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+            </div>
+          </div>
         </div>
       )}
       
+      {statusMessage && (
+        <div className="rounded-md bg-blue-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <div className="text-sm text-blue-700">{statusMessage}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {success && (
-        <div className="rounded-md bg-green-900/50 p-4 border border-green-700">
-          <p className="text-sm text-green-400 flex items-center">
-            <svg className="h-5 w-5 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Token added successfully!
-          </p>
+        <div className="rounded-md bg-green-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-green-800">Success!</h3>
+              <div className="mt-2 text-sm text-green-700">
+                Your token has been successfully added.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -355,10 +402,22 @@ const AddTokenForm: React.FC = () => {
       <div>
         <button
           type="submit"
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={success}
+          disabled={isLoading}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+            isLoading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          {success ? 'Token added successfully' : 'Add Token'}
+          {isLoading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </>
+          ) : (
+            'Add Token'
+          )}
         </button>
       </div>
     </form>
