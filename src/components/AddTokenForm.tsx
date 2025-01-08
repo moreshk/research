@@ -3,6 +3,23 @@
 import React, { useState } from 'react';
 import { VALID_CHAINS } from '@/lib/constants';
 
+const PRESET_ECOSYSTEMS = [
+  'Solana Agent Kit',
+  'BabyAGI',
+  'Truth Terminal',
+  'ai16z',
+  'FXN',
+  'swarms',
+  'Virtuals',
+  'Phala',
+  'ARC',
+  'Zerepy',
+  'VVAIFU',
+  'Holoworld',
+  'Dolion',
+  'Top Hat'
+];
+
 const AddTokenForm: React.FC = () => {
   const [formData, setFormData] = useState({
     contract_address: '',
@@ -181,7 +198,6 @@ const AddTokenForm: React.FC = () => {
             { id: 'twitter_url', label: 'Twitter URL', type: 'url', placeholder: 'https://twitter.com/...' },
             { id: 'dexscreener_url', label: 'DexScreener URL', type: 'url', placeholder: 'https://dexscreener.com/...' },
             { id: 'image_url', label: 'Image URL', type: 'url', placeholder: 'https://...' },
-            { id: 'framework', label: 'Framework', type: 'text', placeholder: 'Enter framework' },
           ].map(({ id, label, type, placeholder }) => (
             <div key={id}>
               <label htmlFor={id} className={labelClasses}>{label}</label>
@@ -196,6 +212,33 @@ const AddTokenForm: React.FC = () => {
               />
             </div>
           ))}
+          <div>
+            <label htmlFor="framework" className={labelClasses}>Ecosystem</label>
+            <select
+              id="framework"
+              name="framework"
+              value={formData.framework}
+              onChange={handleChange}
+              className={inputClasses}
+            >
+              <option value="">Select an ecosystem</option>
+              {PRESET_ECOSYSTEMS.map((ecosystem) => (
+                <option key={ecosystem} value={ecosystem}>{ecosystem}</option>
+              ))}   
+              <option value="custom">Add New Ecosystem</option>
+            </select>
+            {formData.framework === 'custom' && (
+              <input
+                type="text"
+                id="framework-custom"
+                name="framework"
+                value={formData.framework === 'custom' ? '' : formData.framework}
+                onChange={handleChange}
+                placeholder="Select Ecosystem"
+                className={`${inputClasses} mt-2`}
+              />
+            )}
+          </div>
         </div>
       </div>
 
