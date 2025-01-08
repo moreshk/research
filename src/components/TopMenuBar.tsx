@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaTwitter } from 'react-icons/fa';
-import { IoDocumentTextOutline } from 'react-icons/io5';
+import { IoDocumentTextOutline, IoAdd } from 'react-icons/io5';
 import dynamic from 'next/dynamic';
 
 const WalletMultiButtonDynamic = dynamic(
@@ -25,6 +25,17 @@ const TopMenuBar = () => {
           />
           <span className="text-foreground text-xl font-bold">CYBER INDEX</span>
         </Link>
+        
+        <Link
+          href="/add-token"
+          className="ml-6 bg-primary text-white px-4 py-2 rounded-full border border-white/40 hover:bg-primary/80"
+        >
+          <span className="flex items-center">
+            <IoAdd size={16} className="mr-2" />
+            Add Token
+          </span>
+        </Link>
+
         <div className="ml-auto flex items-center space-x-4">
           <Link
             href="https://x.com/launchcybers"
