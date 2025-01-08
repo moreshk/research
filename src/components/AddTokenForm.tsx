@@ -416,7 +416,7 @@ const AddTokenForm: React.FC = () => {
               Processing...
             </>
           ) : (
-            'Add Token'
+            'Add Token (1000 CYBR)'
           )}
         </button>
       </div>

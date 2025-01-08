@@ -44,6 +44,24 @@ const TopMenuBar = () => {
           >
             <IoDocumentTextOutline size={20} />
           </Link>
+          <Link
+            href="https://jup.ag/swap/SOL-CybRqhnLL2WtBdCD4afxYCLVKwkLaDw2iUsNb1kisfQz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-primary text-white px-4 py-2 rounded-full border border-white/40 hover:bg-primary/80"
+            aria-label="Buy CYBR"
+          >
+            <span className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="CYBR"
+                width={16}
+                height={16}
+                className="mr-2"
+              />
+              Buy CYBR
+            </span>
+          </Link>
           <WalletMultiButtonDynamic className="!bg-primary" />
         </div>
       </div>
