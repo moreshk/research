@@ -31,9 +31,14 @@ export async function testConnection() {
   }
 } 
 
-export async function getTokens() {
+export async function getTokens(page: number = 1, limit: number = 20) {
   const client = await pool.connect();
   try {
+    const offset = (page - 1) * limit;
+
+    const countResult = await client.query('SELECT COUNT(*) FROM tokens');
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+
     const result = await client.query(`
       SELECT 
         id, 
@@ -92,7 +97,8 @@ export async function getTokens() {
         is_defi
       FROM tokens 
       ORDER BY name ASC
-    `);
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
 
     // Transform the results to include the calculated scores
     const tokensWithScores = result.rows.map(token => {
@@ -147,7 +153,7 @@ export async function getTokens() {
       };
     });
 
-    return tokensWithScores;
+    return { tokens: tokensWithScores, totalCount };
   } catch (error) {
     console.error('Error fetching tokens:', error);
     throw error;

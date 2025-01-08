@@ -9,7 +9,7 @@ import { ScoreTooltip } from '@/components/table/ScoreTooltip';
 import { CopyableAddress } from '@/components/table/CopyableAddress';
 import { ChainSelect } from '@/components/table/ChainSelect';
 import { SortableHeader } from '@/components/table/SortableHeader';
-import { Token, SortField, SortDirection, FilterType } from '@/types/token';
+import { Token, SortField, SortDirection, FilterType, TokensResponse } from '@/types/token';
 import { formatPrice, formatPriceChange } from '@/utils/format';
 import Link from 'next/link';
 import { calculateCyberIndex } from '@/utils/calculateCyberIndex';
@@ -38,34 +38,70 @@ export default function Home() {
     field: null,
     direction: 'desc'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const priceResponse = await fetch('/api/updatePrices');
-        const priceData = await priceResponse.json();
+        setLoading(true);
         
-        const tokenResponse = await fetch('/api/tokens');
+        // First get the tokens with any cached prices
+        const tokenResponse = await fetch(`/api/tokens?page=${currentPage}&limit=20`);
         if (!tokenResponse.ok) {
           throw new Error('Failed to fetch tokens');
         }
-        const data = await tokenResponse.json();
-
-        if (priceData && priceData.success && Array.isArray(priceData.data)) {
-          setTokens(
-            data.map((d: Token) => {
-              const details = priceData.data.find(
-                (a: any) => a.contract_address === d.contract_address
-              );
-              if (details) return { ...d, ...details };
-              return d;
-            })
-          );
+        const data: TokensResponse = await tokenResponse.json();
+        
+        // If we don't have cached prices or they're old, fetch new ones
+        if (!data.cached || isStale(data.timestamp)) {
+          const priceResponse = await fetch('/api/updatePrices');
+          const priceData = await priceResponse.json();
+          
+          if (priceData.success && Array.isArray(priceData.data)) {
+            setTokens(
+              data.tokens.map((d: Token) => {
+                const details = priceData.data.find(
+                  (a: any) => a.contract_address === d.contract_address
+                );
+                if (details) {
+                  return {
+                    ...d,
+                    price: Number(details.price) || null,
+                    market_cap: Number(details.market_cap) || null,
+                    price_change_24h: Number(details.price_change_24h) || null,
+                    ...details
+                  };
+                }
+                return {
+                  ...d,
+                  price: null,
+                  market_cap: null,
+                  price_change_24h: null
+                };
+              })
+            );
+          } else {
+            setTokens(data.tokens.map(token => ({
+              ...token,
+              price: Number(token.price) || null,
+              market_cap: Number(token.market_cap) || null,
+              price_change_24h: Number(token.price_change_24h) || null
+            })));
+          }
         } else {
-          setTokens(data);
+          setTokens(data.tokens.map(token => ({
+            ...token,
+            price: Number(token.price) || null,
+            market_cap: Number(token.market_cap) || null,
+            price_change_24h: Number(token.price_change_24h) || null
+          })));
         }
+        
+        setTotalPages(data.totalPages);
+        
         // Fetch Cyber Index for tokens with GitHub URLs
-        data.forEach((token: Token) => {
+        data.tokens.forEach((token: Token) => {
           if (token.github_url) {
             fetchCyberIndex(token);
           }
@@ -79,7 +115,14 @@ export default function Home() {
     }
 
     fetchData();
-  }, []);
+  }, [currentPage]);
+
+  // Helper function to check if cached data is stale
+  const isStale = (timestamp: number) => {
+    const now = Date.now();
+    const hourInMs = 3600000; // 1 hour in milliseconds
+    return now - timestamp > hourInMs;
+  };
 
   const uniqueChains = Array.from(new Set(tokens.map(token => token.chain)));
   const uniqueEcosystems = Array.from(new Set(tokens.map(token => token.ecosystem)))
@@ -166,6 +209,10 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching Cyber Index:', error);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -493,6 +540,26 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-4 py-2 mr-2 bg-gray-800 text-white rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <div className="px-4 py-2">
+          Page {currentPage} of {totalPages}
+        </div>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 ml-2 bg-gray-800 text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

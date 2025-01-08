@@ -10,9 +10,9 @@ export interface Token {
   contract_address: string;
   chain: string;
   ecosystem: string;
-  price: number;
-  price_change_24h: number;
-  market_cap: number;
+  price?: number | null;
+  price_change_24h?: number | null;
+  market_cap?: number | null;
   breakout_score: number;
   is_agent: boolean;
   is_framework: boolean;
@@ -31,4 +31,13 @@ export interface Token {
   is_kol: boolean;
   is_defi: boolean;
   [key: string]: any;
+}
+
+export interface TokensResponse {
+  tokens: Token[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+  cached: boolean;
+  timestamp: number;
 } 
