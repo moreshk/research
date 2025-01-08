@@ -1,9 +1,15 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaTwitter } from 'react-icons/fa';
 import { IoDocumentTextOutline } from 'react-icons/io5';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import '@solana/wallet-adapter-react-ui/styles.css';
+import dynamic from 'next/dynamic';
+
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+);
 
 const TopMenuBar = () => {
   return (
@@ -38,7 +44,7 @@ const TopMenuBar = () => {
           >
             <IoDocumentTextOutline size={20} />
           </Link>
-          <WalletMultiButton className="!bg-primary" />
+          <WalletMultiButtonDynamic className="!bg-primary" />
         </div>
       </div>
     </nav>
