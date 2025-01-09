@@ -172,12 +172,10 @@ export default function Home() {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-8">
-      {/* <h1 className="text-2xl font-bold mb-4">Tokens</h1> */}
-      
-      <div className="flex gap-4 mb-4">
+    <div className="p-4 sm:p-8">
+      <div className="mb-4 flex flex-col sm:flex-row gap-4 overflow-x-auto">
         <select
-          className="bg-gray-800 text-white rounded px-3 py-2"
+          className="bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-auto"
           value={filters.type}
           onChange={(e) => handleFilterChange(e.target.value as FilterType)}
         >
@@ -197,7 +195,7 @@ export default function Home() {
         />
 
         <select
-          className="bg-gray-800 text-white rounded px-3 py-2"
+          className="bg-gray-800 text-white rounded px-3 py-2 w-full sm:w-auto"
           value={filters.ecosystem}
           onChange={(e) => setFilters(prev => ({ ...prev, ecosystem: e.target.value }))}
         >
@@ -212,9 +210,9 @@ export default function Home() {
         <table className="min-w-full divide-y divide-gray-700">
           <thead className="bg-gray-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Token</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Token</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chain</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ecosystem</th>
               <SortableHeader
                 field="price"
                 label="Price"
@@ -244,7 +242,7 @@ export default function Home() {
                 sortConfig={sortConfig}
                 onSort={handleSort}
               />
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 <div className="flex items-center gap-1">
                   Type
                   <TypeTooltip showIcon={true} />
@@ -285,7 +283,7 @@ export default function Home() {
                   className="hover:bg-gray-800 cursor-pointer"
                   onClick={() => toggleRow(token.id)}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="mr-2 text-gray-400">
                         {expandedRows.has(token.id) ? (
@@ -295,24 +293,24 @@ export default function Home() {
                         )}
                       </div>
                       {token.image_url && (
-                        <div className="flex-shrink-0 h-10 w-10 mr-4">
+                        <div className="flex-shrink-0 h-8 w-8 mr-3">
                           <img
                             src={token.image_url}
                             alt={token.name}
-                            className="h-10 w-10 rounded-full"
+                            className="h-8 w-8 rounded-full"
                           />
                         </div>
                       )}
                       <div>
-                        <div className="font-medium text-white">{token.name}</div>
+                        <div className="font-medium text-white text-sm">{token.name}</div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-400">{token.symbol}</span>
+                          <span className="text-xs text-gray-400">{token.symbol}</span>
                           <CopyableAddress address={token.contract_address} />
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <img 
                       src={`/${token.id === 3 ? 'base' : token.chain.toLowerCase()}.png`}
                       alt={token.id === 3 ? 'base' : token.chain}
@@ -320,32 +318,32 @@ export default function Home() {
                       title={token.id === 3 ? 'base' : token.chain}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900 text-indigo-200">
                       {token.ecosystem || 'Unknown'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-white font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className="text-white font-medium text-sm">
                       {formatPrice(token.price)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`font-medium ${
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`font-medium text-sm ${
                       !token.price_change_24h ? 'text-gray-400' :
                       token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {formatPriceChange(token.price_change_24h)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-white font-medium">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className="text-white font-medium text-sm">
                       {token.market_cap ? formatPrice(token.market_cap, true) : 'N/A'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span className={`font-medium ${
+                      <span className={`font-medium text-sm ${
                         token.breakout_score > 0 ? 'text-green-400' : 
                         token.breakout_score < 0 ? 'text-red-400' : 
                         'text-gray-400'
@@ -354,8 +352,8 @@ export default function Home() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-wrap gap-2">
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="flex flex-wrap gap-1">
                       {token.is_agent && (
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-200">
                           Agent
@@ -388,7 +386,7 @@ export default function Home() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {token.github_url ? (
                         token.cyberIndex !== undefined && token.cyberIndex !== null ? 
@@ -400,90 +398,89 @@ export default function Home() {
                 </tr>
                 {expandedRows.has(token.id) && (
                   <tr className="bg-gray-800">
-                    <td colSpan={9} className="px-6 py-4">
-                      <div className="space-y-4">
-                        {/* Breakout Score Components */}
-                        <div className="grid grid-cols-5 gap-4 pb-4 border-b border-gray-700">
-                          <ScoreTooltip
-                            label="Price Score"
-                            score={token.price_score}
-                            tooltipContent="Weighted price change for the last 24h"
-                          />
-                          <ScoreTooltip
-                            label="Volume Score"
-                            score={token.volume_score}
-                            tooltipContent="Weighted volume change for the last 24h"
-                          />
-                          <ScoreTooltip
-                            label="Buy/Sell Score"
-                            score={token.buy_sell_score}
-                            tooltipContent="Weighted difference between buyers and sellers for the last 24h"
-                          />
-                          <ScoreTooltip
-                            label="Holder Score"
-                            score={token.wallet_score}
-                            tooltipContent="Weighted unique wallet count for the last 24h"
-                          />
-                          <ScoreTooltip
-                            label="Trade Score"
-                            score={token.trade_score}
-                            tooltipContent="Weighted trade counts for the last 24h"
-                          />
-                        </div>
+                    <td colSpan={9} className="px-4 py-4">
+                      <div className="w-full sm:w-auto overflow-x-hidden">
+                        <div className="space-y-6 max-w-[calc(100vw-2rem)] sm:max-w-none">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <ScoreTooltip
+                              label="Price Score"
+                              score={token.price_score}
+                              tooltipContent="Weighted price change for the last 24h"
+                            />
+                            <ScoreTooltip
+                              label="Volume Score"
+                              score={token.volume_score}
+                              tooltipContent="Weighted volume change for the last 24h"
+                            />
+                            <ScoreTooltip
+                              label="Buy/Sell Score"
+                              score={token.buy_sell_score}
+                              tooltipContent="Weighted difference between buyers and sellers for the last 24h"
+                            />
+                            <ScoreTooltip
+                              label="Holder Score"
+                              score={token.wallet_score}
+                              tooltipContent="Weighted unique wallet count for the last 24h"
+                            />
+                            <ScoreTooltip
+                              label="Trade Score"
+                              score={token.trade_score}
+                              tooltipContent="Weighted trade counts for the last 24h"
+                            />
+                          </div>
 
-                        {/* Existing expanded content */}
-                        <div className="text-gray-300 whitespace-pre-wrap animate-expandRow">
-                          {token.project_desc || 'No description available.'}
-                        </div>
-                        
-                        {/* Links Section */}
-                        <div className="flex gap-4 pt-2">
-                          {token.github_url && (
-                            <Link
-                              href={(() => {
-                                try {
-                                  const url = new URL(token.github_url);
-                                  const [owner, repo] = url.pathname.split('/').filter(Boolean);
-                                  if (!owner || !repo) throw new Error('Invalid GitHub URL format');
-                                  return `/repo/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
-                                } catch (e) {
-                                  console.error('Invalid GitHub URL:', token.github_url);
-                                  return '#';
-                                }
-                              })()}
-                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                              title="View Repository Details"
-                            >
-                              <GitHubLogoIcon className="h-5 w-5" />
-                              <span className="text-sm">GitHub</span>
-                            </Link>
-                          )}
+                          <div className="text-gray-300 animate-expandRow text-sm">
+                            {token.project_desc || 'No description available.'}
+                          </div>
                           
-                          {token.twitter_url && (
-                            <a
-                              href={token.twitter_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                              title="Twitter Profile"
-                            >
-                              <TwitterLogoIcon className="h-5 w-5" />
-                              <span className="text-sm">Twitter</span>
-                            </a>
-                          )}
-                          
-                          {token.dexscreener_url && (
-                            <a
-                              href={token.dexscreener_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                              title="DexScreener"
-                            >
-                              <ExternalLinkIcon className="h-5 w-5" />
-                              <span className="text-sm">DexScreener</span>
-                            </a>
-                          )}
+                          <div className="flex flex-wrap gap-3">
+                            {token.github_url && (
+                              <Link
+                                href={(() => {
+                                  try {
+                                    const url = new URL(token.github_url);
+                                    const [owner, repo] = url.pathname.split('/').filter(Boolean);
+                                    if (!owner || !repo) throw new Error('Invalid GitHub URL format');
+                                    return `/repo/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+                                  } catch (e) {
+                                    console.error('Invalid GitHub URL:', token.github_url);
+                                    return '#';
+                                  }
+                                })()}
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-700/50 px-3 py-2 rounded-lg"
+                                title="View Repository Details"
+                              >
+                                <GitHubLogoIcon className="h-5 w-5" />
+                                <span className="text-sm">GitHub</span>
+                              </Link>
+                            )}
+                            
+                            {token.twitter_url && (
+                              <a
+                                href={token.twitter_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-700/50 px-3 py-2 rounded-lg"
+                                title="Twitter Profile"
+                              >
+                                <TwitterLogoIcon className="h-5 w-5" />
+                                <span className="text-sm">Twitter</span>
+                              </a>
+                            )}
+                            
+                            {token.dexscreener_url && (
+                              <a
+                                href={token.dexscreener_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors bg-gray-700/50 px-3 py-2 rounded-lg"
+                                title="DexScreener"
+                              >
+                                <ExternalLinkIcon className="h-5 w-5" />
+                                <span className="text-sm">DexScreener</span>
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
