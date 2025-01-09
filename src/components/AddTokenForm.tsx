@@ -55,6 +55,8 @@ const AddTokenForm: React.FC = () => {
     image_url: '',
     framework: '',
   });
+  const [isCustomFramework, setIsCustomFramework] = useState(false);
+  const [customFramework, setCustomFramework] = useState('');
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -64,10 +66,36 @@ const AddTokenForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setError(null);
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
-    }));
+
+    if (name === 'framework') {
+      if (e.target.id === 'framework-custom') {
+        setCustomFramework(value);
+        setFormData(prev => ({
+          ...prev,
+          framework: value
+        }));
+      } else {
+        if (value === 'custom') {
+          setIsCustomFramework(true);
+          setFormData(prev => ({
+            ...prev,
+            framework: ''
+          }));
+        } else {
+          setIsCustomFramework(false);
+          setFormData(prev => ({
+            ...prev,
+            framework: value
+          }));
+          setCustomFramework('');
+        }
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -338,7 +366,7 @@ const AddTokenForm: React.FC = () => {
             <select
               id="framework"
               name="framework"
-              value={formData.framework}
+              value={isCustomFramework ? 'custom' : formData.framework}
               onChange={handleChange}
               className={inputClasses}
             >
@@ -348,14 +376,14 @@ const AddTokenForm: React.FC = () => {
               ))}   
               <option value="custom">Add New Ecosystem</option>
             </select>
-            {formData.framework === 'custom' && (
+            {isCustomFramework && (
               <input
                 type="text"
                 id="framework-custom"
                 name="framework"
-                value={formData.framework === 'custom' ? '' : formData.framework}
+                value={customFramework}
                 onChange={handleChange}
-                placeholder="Select Ecosystem"
+                placeholder="Enter new ecosystem name"
                 className={`${inputClasses} mt-2`}
               />
             )}
