@@ -44,7 +44,7 @@ function isValidContractAddress(address: string, chain: Chain): boolean {
   return isAddress(address);
 }
 
-const CACHE_KEY = 'token_prices';
+const CACHE_KEY ='token_data';
 
 export async function GET() {
   try {

@@ -2,7 +2,7 @@ import { getTokens, updateTokenPrices } from "@/lib/db";
 import redis from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
 
-const CACHE_KEY = "token_prices1";
+const CACHE_KEY = "token_data";
 const CACHE_EXPIRY = 3600; // 1 hour in seconds
 const RATE_LIMIT = 14; // maximum requests per second
 const BATCH_DELAY = 1000; // 1 second delay between batches
